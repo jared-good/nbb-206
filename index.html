@@ -7,8 +7,9 @@
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 10px; margin: 0; transition: border 0.3s; border: 2px solid #000; height: 100vh; box-sizing: border-box; overflow-y: auto; }
         .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #333; position: relative; }
+        .card-gold { border: 1px solid #f39c12; box-shadow: 0 0 12px rgba(243,156,18,0.15); }
         h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .bankroll { font-size: 28px; font-weight: bold; color: #2ecc71; text-align: center; margin: 5px 0; }
+        .bankroll { font-size: 26px; font-weight: bold; color: #2ecc71; text-align: center; margin: 5px 0; }
         .report-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
         .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
         .tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
@@ -23,7 +24,7 @@
         .stat-num { font-size: 17px; font-weight: bold; color: #f39c12; }
         .date-display { font-size: 13px; color: #f39c12; margin-bottom: 8px; font-weight: bold; text-align: center; display: flex; justify-content: center; gap: 10px; align-items: center; }
         .streak-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: #333; }
-        .progress-bg { background: #333; border-radius: 10px; height: 8px; overflow: hidden; margin-top: 5px; }
+        .progress-bg { background: #333; border-radius: 8px; height: 14px; overflow: hidden; margin-top: 8px; border: 1px solid #444; }
         .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 0.5s; }
         input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
         input { background: #262626; color: #fff; border: 1px solid #444; }
@@ -45,10 +46,15 @@
         <div class="bankroll" id="bankrollDisplay">0.0 u</div>
     </div>
 
+    <div class="card card-gold">
+        <h2>🎯 本週 300u 目標進度 <span id="weekProgressText" style="color:#fff; font-size:14px; font-weight:normal;">0.0 / 300u</span></h2>
+        <div class="progress-bg"><div class="progress-fill" id="weekBar"></div></div>
+    </div>
+
     <div class="card">
         <div class="report-tabs">
             <div class="tab active" onclick="setMode('day', this)">日報</div>
-            <div class="tab" onclick="setMode('week', this)">週報 (300u)</div>
+            <div class="tab" onclick="setMode('week', this)">週報</div>
             <div class="tab" onclick="setMode('month', this)">月報</div>
         </div>
         <div class="date-display"><span id="dateRange">---</span> <span id="streakBadge" class="streak-badge"></span></div>
@@ -57,7 +63,6 @@
             <div class="stat-box"><div class="stat-label">勝率</div><div id="winRate" class="stat-num">0%</div></div>
             <div class="stat-box"><div class="stat-label">區間損益</div><div id="total" class="stat-num">0</div></div>
         </div>
-        <div class="progress-bg"><div class="progress-fill" id="bar"></div></div>
     </div>
 
     <div class="card">
@@ -124,6 +129,12 @@
             return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(),0,1))) / 86400000) + 1)/7);
         }
 
+        function getMonday(d) {
+            d = new Date(d);
+            var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6:1);
+            return new Date(d.setDate(diff));
+        }
+
         function setMode(mode, el) {
             currentMode = mode;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -132,14 +143,25 @@
         }
 
         function render() {
-            let t = 0, win = 0, g = 0, allTimeProfit = 0; 
+            let t = 0, win = 0, g = 0, allTimeProfit = 0, weekProfit = 0; 
             let cWin = 0, cLose = 0;
-            const now = new Date(); const tbody = document.getElementById('list');
+            const now = new Date(); 
+            const thisMonday = getMonday(now);
+            thisMonday.setHours(0,0,0,0);
+            
+            const tbody = document.getElementById('list');
             tbody.innerHTML = '';
 
-            // 計算連勝/連黑 & 總損益
+            // 計算連勝/連黑、總損益、與「本週」嚴格損益
             for(let i=0; i<logs.length; i++) {
+                let logDate = new Date(logs[i].date);
                 allTimeProfit += logs[i].p;
+                
+                // 獨立計算本週 (週一到週日)
+                if(logDate >= thisMonday) {
+                    weekProfit += logs[i].p;
+                }
+
                 if(logs[i].p === 0) continue;
                 if(logs[i].p > 0) { if(cLose===0) cWin++; else break; }
                 else if(logs[i].p < 0) { if(cWin===0) cLose++; else break; }
@@ -169,7 +191,11 @@
             // 資金庫更新
             document.getElementById('bankrollDisplay').innerText = (baseMoney + allTimeProfit).toFixed(1) + ' u';
 
-            // 報表區間計算
+            // 更新獨立的每週 300u 進度條
+            document.getElementById('weekProgressText').innerText = weekProfit.toFixed(1) + ' / 300u';
+            document.getElementById('weekBar').style.width = Math.min(Math.max(0, (weekProfit/300)*100), 100) + '%';
+
+            // 報表區間計算 (配合下方日/週/月切換)
             const dateEl = document.getElementById('dateRange');
             if(currentMode==='day') dateEl.innerText = `${now.getMonth()+1}/${now.getDate()} (今日)`;
             else if(currentMode==='week') dateEl.innerText = `第 ${getWeek(now)} 週戰報`;
@@ -178,7 +204,7 @@
             logs.forEach((l, i) => {
                 const ld = new Date(l.date); let inR = false;
                 if(currentMode==='day') inR = ld.toDateString()===now.toDateString();
-                else if(currentMode==='week') { const wk = new Date(); wk.setDate(now.getDate()-7); inR = ld >= wk; }
+                else if(currentMode==='week') { inR = ld >= thisMonday; } // 切換到週報也是嚴格週一到週日
                 else inR = ld.getMonth()===now.getMonth() && ld.getFullYear()===now.getFullYear();
 
                 if(inR) { t += l.p; if(l.p>0){win++;g++;}else if(l.p<0)g++; }
@@ -188,7 +214,7 @@
             document.getElementById('total').innerText = t.toFixed(1);
             document.getElementById('winCount').innerText = win;
             document.getElementById('winRate').innerText = g>0?Math.round((win/g)*100)+'%':'0%';
-            document.getElementById('bar').style.width = Math.min(Math.max(0, (t/300)*100),100)+'%';
+            
             localStorage.setItem('nba_god_mode', JSON.stringify(logs));
         }
 
