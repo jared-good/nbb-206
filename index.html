@@ -8,8 +8,11 @@
         body { font-family: sans-serif; background-color: #000; color: #fff; padding: 15px; margin: 0; }
         .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
         h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 16px; display: flex; justify-content: space-between; }
-        .stat-val { font-size: 24px; font-weight: bold; color: #f39c12; }
-        .progress-bg { background: #333; border-radius: 10px; height: 12px; margin-top: 8px; overflow: hidden; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; text-align: center; }
+        .stat-box { background: #262626; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .stat-label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .stat-num { font-size: 18px; font-weight: bold; color: #f39c12; }
+        .progress-bg { background: #333; border-radius: 10px; height: 12px; margin-top: 10px; overflow: hidden; }
         .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 0.5s; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
         input { background: #262626; color: #fff; border: 1px solid #444; }
@@ -18,18 +21,23 @@
         th { text-align: left; color: #888; padding-bottom: 8px; border-bottom: 1px solid #333; }
         td { padding: 12px 5px; border-bottom: 1px solid #222; }
         .win { color: #2ecc71; } .lose { color: #e74c3c; }
+        .del-btn { color: #e74c3c; background: none; border: none; font-size: 18px; padding: 0 5px; width: auto; margin-top: 0; display: inline; cursor: pointer; }
         .import-btn { background: #34495e; color: #ecf0f1; margin-top: 5px; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>🔥 戰情進度 (目標 300u)</h2>
-        <div class="stat-val"><span id="total">0</span> <small style="font-size: 14px; color: #888;">u</small></div>
+        <h2>🔥 戰情總結 (目標 300u)</h2>
+        <div class="stat-grid">
+            <div class="stat-box"><div class="stat-label">勝場</div><div id="winCount" class="stat-num">0</div></div>
+            <div class="stat-box"><div class="stat-label">勝率</div><div id="winRate" class="stat-num">0%</div></div>
+            <div class="stat-box"><div class="stat-label">累積損益</div><div id="total" class="stat-num">0</div></div>
+        </div>
         <div class="progress-bg"><div class="progress-fill" id="bar"></div></div>
     </div>
 
     <div class="card">
-        <h2>🤖 AI 對接工具</h2>
+        <h2>🤖 AI 對接</h2>
         <button class="import-btn" onclick="importData()">貼上 Gemini 投注清單</button>
     </div>
 
@@ -46,23 +54,39 @@
 
     <div class="card">
         <h2>📋 歷史戰報</h2>
-        <table><thead><tr><th>賽事</th><th>結果</th><th>損益</th></tr></thead><tbody id="list"></tbody></table>
-        <button onclick="localStorage.clear();location.reload();" style="background:transparent;color:#555;font-size:11px;margin-top:10px;">清空數據</button>
+        <table>
+            <thead><tr><th>賽事</th><th>結果</th><th>損益</th><th>刪除</th></tr></thead>
+            <tbody id="list"></tbody>
+        </table>
+        <button onclick="if(confirm('確定清空？')){localStorage.clear();location.reload();}" style="background:transparent;color:#555;font-size:11px;margin-top:10px;">清空所有數據</button>
     </div>
 
     <script>
         let logs = JSON.parse(localStorage.getItem('nba_v2_logs')) || [];
         function render() {
-            let t = 0; let h = '';
+            let t = 0, win = 0, totalGames = 0;
+            const tbody = document.getElementById('list');
+            tbody.innerHTML = '';
+
             logs.forEach((l, index) => {
                 t += l.p;
+                if (l.p > 0) { win++; totalGames++; }
+                else if (l.p < 0) { totalGames++; }
+                
                 let resTxt = l.p > 0 ? '勝' : (l.p < 0 ? '負' : '走');
-                if (l.p === 999) resTxt = '待定'; 
-                h += `<tr><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${resTxt}</td><td>${l.p===999?'-':(l.p>0?'+'+l.p:l.p)}</td></tr>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${l.n}</td>
+                        <td class="${l.p>0?'win':(l.p<0?'lose':'')}">${resTxt}</td>
+                        <td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td>
+                        <td><button class="del-btn" onclick="deleteLog(${index})">×</button></td>
+                    </tr>`;
             });
-            document.getElementById('list').innerHTML = h;
+
             document.getElementById('total').innerText = t.toFixed(1);
-            document.getElementById('bar').style.width = Math.min((t / 300) * 100, 100) + '%';
+            document.getElementById('winCount').innerText = win;
+            document.getElementById('winRate').innerText = totalGames > 0 ? Math.round((win / totalGames) * 100) + '%' : '0%';
+            document.getElementById('bar').style.width = Math.min(Math.max(0, (t / 300) * 100), 100) + '%';
             localStorage.setItem('nba_v2_logs', JSON.stringify(logs));
         }
         function save() {
@@ -70,15 +94,18 @@
             const p = parseFloat(document.getElementById('res').value);
             if(!n) return; logs.unshift({n, p}); render(); document.getElementById('name').value = '';
         }
+        function deleteLog(index) {
+            logs.splice(index, 1);
+            render();
+        }
         function importData() {
-            const raw = prompt("請貼上 Gemini 提供給您的數據代碼：");
+            const raw = prompt("請貼上數據代碼：");
             if (raw) {
                 try {
                     const cleanData = JSON.parse(raw);
                     logs = cleanData.concat(logs);
                     render();
-                    alert("✅ 清單已同步！");
-                } catch(e) { alert("❌ 代碼格式錯誤，請重新複製。"); }
+                } catch(e) { alert("代碼格式錯誤"); }
             }
         }
         render();
