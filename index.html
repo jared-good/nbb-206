@@ -3,27 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NBA 專業量化操盤室</title>
+    <title>NBA 專業操盤室</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 15px; margin: 0; }
-        .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
-        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 16px; }
-        .report-tabs, .unit-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-        .tab, .u-tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
-        .tab.active, .u-tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; text-align: center; }
-        .stat-box { background: #262626; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-        .stat-label { font-size: 11px; color: #888; margin-bottom: 5px; }
-        .stat-num { font-size: 18px; font-weight: bold; color: #f39c12; }
-        .date-display { font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold; text-align: center; }
-        .progress-bg { background: #333; border-radius: 10px; height: 10px; margin-top: 8px; overflow: hidden; }
+        body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 10px; margin: 0; }
+        .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #333; }
+        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 15px; }
+        .report-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
+        .tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
+        .unit-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px; }
+        .u-tab { padding: 8px 0; background: #262626; border-radius: 5px; text-align: center; font-size: 12px; color: #888; cursor: pointer; border: 1px solid #333; }
+        .u-tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; text-align: center; }
+        .stat-box { background: #222; padding: 8px; border-radius: 8px; border: 1px solid #333; }
+        .stat-label { font-size: 11px; color: #888; margin-bottom: 3px; }
+        .stat-num { font-size: 17px; font-weight: bold; color: #f39c12; }
+        .date-display { font-size: 13px; color: #f39c12; margin-bottom: 8px; font-weight: bold; text-align: center; }
+        .progress-bg { background: #333; border-radius: 10px; height: 8px; overflow: hidden; }
         .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 0.5s; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
         input { background: #262626; color: #fff; border: 1px solid #444; }
         button { background: #f39c12; color: #000; font-weight: bold; }
-        table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 12px; }
-        th { text-align: left; color: #888; padding-bottom: 8px; border-bottom: 1px solid #333; }
-        td { padding: 10px 5px; border-bottom: 1px solid #222; }
+        table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; color: #888; padding-bottom: 5px; border-bottom: 1px solid #333; }
+        td { padding: 10px 4px; border-bottom: 1px solid #222; }
         .win { color: #2ecc71; } .lose { color: #e74c3c; }
         .del-btn { color: #e74c3c; background: none; border: none; font-size: 18px; cursor: pointer; }
     </style>
@@ -47,11 +50,15 @@
 
     <div class="card">
         <h2>✍️ 快速記錄 (賠率 1.88)</h2>
-        <div class="unit-tabs">
+        <div class="unit-grid">
             <div class="u-tab active" onclick="setUnit(20, this)">20u</div>
             <div class="u-tab" onclick="setUnit(30, this)">30u</div>
             <div class="u-tab" onclick="setUnit(40, this)">40u</div>
             <div class="u-tab" onclick="setUnit(50, this)">50u</div>
+            <div class="u-tab" onclick="setUnit(60, this)">60u</div>
+            <div class="u-tab" onclick="setUnit(70, this)">70u</div>
+            <div class="u-tab" onclick="setUnit(80, this)">80u</div>
+            <div class="u-tab" onclick="setUnit(90, this)">90u</div>
             <div class="u-tab" onclick="setUnit(100, this)">100u</div>
         </div>
         <input type="text" id="name" placeholder="賽事名稱">
@@ -61,40 +68,37 @@
             <option value="0">走 (0u)</option>
         </select>
         <button onclick="save()">保存記錄</button>
-        <button onclick="importData()" style="background:#34495e; color:#eee; font-size:12px; margin-top:8px;">導入 AI 代碼</button>
+        <button onclick="importData()" style="background:#34495e; color:#eee; font-size:12px; margin-top:8px; width:100%;">導入 AI 清單</button>
     </div>
 
     <div class="card">
         <h2>📋 歷史清單</h2>
         <table>
-            <thead><tr><th>日期</th><th>賽事</th><th>結果</th><th>損益</th><th>刪</th></tr></thead>
+            <thead><tr><th>日期</th><th>賽事</th><th>結果</th><th>損益</th><th></th></tr></thead>
             <tbody id="list"></tbody>
         </table>
-        <button onclick="if(confirm('清空所有紀錄？')){localStorage.clear();location.reload();}" style="background:transparent;color:#555;font-size:11px;margin-top:20px;">🗑️ 全部重置</button>
+        <button onclick="if(confirm('重置所有數據？')){localStorage.clear();location.reload();}" style="background:transparent;color:#555;font-size:11px;margin-top:15px;width:auto;padding:5px;">🗑️ 全部重置</button>
     </div>
 
     <script>
-        let logs = JSON.parse(localStorage.getItem('nba_quant_v4')) || [];
-        let currentMode = 'day';
-        let currentUnit = 20;
+        let logs = JSON.parse(localStorage.getItem('nba_final_v1')) || [];
+        let currentMode = 'day', currentUnit = 20;
 
         function setUnit(u, el) {
             currentUnit = u;
             document.querySelectorAll('.u-tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
-            
-            const winProfit = (u * 0.88).toFixed(1);
-            document.getElementById('opt-win').value = winProfit;
-            document.getElementById('opt-win').innerText = `勝 (+${winProfit}u)`;
+            const winP = (u * 0.88).toFixed(1);
+            document.getElementById('opt-win').value = winP;
+            document.getElementById('opt-win').innerText = `勝 (+${winP}u)`;
             document.getElementById('opt-lose').value = -u;
             document.getElementById('opt-lose').innerText = `負 (-${u}u)`;
         }
 
-        function getWeekNumber(d) {
+        function getWeek(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            let yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+            return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(),0,1))) / 86400000) + 1)/7);
         }
 
         function setMode(mode, el) {
@@ -105,70 +109,37 @@
         }
 
         function render() {
-            let t = 0, win = 0, totalGames = 0;
-            const now = new Date();
-            const tbody = document.getElementById('list');
+            let t = 0, win = 0, g = 0; const now = new Date(); const tbody = document.getElementById('list');
             tbody.innerHTML = '';
-
             const dateEl = document.getElementById('dateRange');
-            if(currentMode === 'day') dateEl.innerText = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} (今日)`;
-            else if(currentMode === 'week') dateEl.innerText = `${now.getFullYear()} 第 ${getWeekNumber(now)} 週戰報`;
+            if(currentMode==='day') dateEl.innerText = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} (今日)`;
+            else if(currentMode==='week') dateEl.innerText = `${now.getFullYear()} 第 ${getWeek(now)} 週戰報`;
             else dateEl.innerText = `${now.getFullYear()}年 ${now.getMonth()+1}月 戰報`;
 
-            logs.forEach((l, index) => {
-                const logDate = new Date(l.date);
-                let inRange = false;
-                if (currentMode === 'day') inRange = logDate.toDateString() === now.toDateString();
-                else if (currentMode === 'week') {
-                    const oneWeekAgo = new Date(); oneWeekAgo.setDate(now.getDate() - 7);
-                    inRange = logDate >= oneWeekAgo;
-                }
-                else if (currentMode === 'month') inRange = logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+            logs.forEach((l, i) => {
+                const ld = new Date(l.date); let inR = false;
+                if(currentMode==='day') inR = ld.toDateString()===now.toDateString();
+                else if(currentMode==='week') { const wk = new Date(); wk.setDate(now.getDate()-7); inR = ld >= wk; }
+                else inR = ld.getMonth()===now.getMonth() && ld.getFullYear()===now.getFullYear();
 
-                if (inRange) {
-                    t += l.p;
-                    if (l.p > 0) { win++; totalGames++; } else if (l.p < 0) { totalGames++; }
-                }
-
-                const dStr = `${logDate.getMonth()+1}/${logDate.getDate()}`;
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${dStr}</td>
-                        <td>${l.n}</td>
-                        <td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'勝':(l.p<0?'負':'走')}</td>
-                        <td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td>
-                        <td><button class="del-btn" onclick="deleteLog(${index})">×</button></td>
-                    </tr>`;
+                if(inR) { t += l.p; if(l.p>0){win++;g++;}else if(l.p<0)g++; }
+                tbody.innerHTML += `<tr><td>${ld.getMonth()+1}/${ld.getDate()}</td><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'勝':(l.p<0?'負':'走')}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td><td><button class="del-btn" onclick="del(${i})">×</button></td></tr>`;
             });
-
             document.getElementById('total').innerText = t.toFixed(1);
             document.getElementById('winCount').innerText = win;
-            document.getElementById('winRate').innerText = totalGames > 0 ? Math.round((win / totalGames) * 100) + '%' : '0%';
-            document.getElementById('bar').style.width = Math.min(Math.max(0, (t / 300) * 100), 100) + '%';
-            localStorage.setItem('nba_quant_v4', JSON.stringify(logs));
+            document.getElementById('winRate').innerText = g>0?Math.round((win/g)*100)+'%':'0%';
+            document.getElementById('bar').style.width = Math.min(Math.max(0, (t/300)*100),100)+'%';
+            localStorage.setItem('nba_final_v1', JSON.stringify(logs));
         }
 
         function save() {
-            const n = document.getElementById('name').value;
-            const p = parseFloat(document.getElementById('res').value);
-            if(!n) return;
-            logs.unshift({ n, p, date: new Date().toISOString() });
-            render();
-            document.getElementById('name').value = '';
+            const n = document.getElementById('name').value; const p = parseFloat(document.getElementById('res').value);
+            if(!n) return; logs.unshift({n, p, date: new Date().toISOString()}); render(); document.getElementById('name').value='';
         }
-
-        function deleteLog(index) {
-            if(confirm('刪除這筆紀錄？')) { logs.splice(index, 1); render(); }
-        }
-
+        function del(i) { if(confirm('刪除？')){logs.splice(i,1); render();} }
         function importData() {
-            const raw = prompt("貼上 AI 清單代碼：");
-            if (raw) {
-                try {
-                    const data = JSON.parse(raw).map(item => ({...item, date: new Date().toISOString()}));
-                    logs = data.concat(logs); render();
-                } catch(e) { alert("格式錯誤！"); }
-            }
+            const r = prompt("貼上 AI 代碼：");
+            if(r){ try{ const d=JSON.parse(r).map(x=>({...x, date:new Date().toISOString()})); logs=d.concat(logs); render(); }catch(e){alert("格式錯誤");} }
         }
         render();
     </script>
