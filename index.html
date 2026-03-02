@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NBA 20u 精確操盤室</title>
+    <title>NBA 專業量化操盤室</title>
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 15px; margin: 0; }
         .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
         h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 16px; }
-        .report-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-        .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
-        .tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
+        .report-tabs, .unit-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab, .u-tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
+        .tab.active, .u-tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; text-align: center; }
         .stat-box { background: #262626; padding: 10px; border-radius: 8px; border: 1px solid #333; }
         .stat-label { font-size: 11px; color: #888; margin-bottom: 5px; }
@@ -46,11 +46,18 @@
     </div>
 
     <div class="card">
-        <h2>✍️ 20u 快速記錄</h2>
+        <h2>✍️ 快速記錄 (賠率 1.88)</h2>
+        <div class="unit-tabs">
+            <div class="u-tab active" onclick="setUnit(20, this)">20u</div>
+            <div class="u-tab" onclick="setUnit(30, this)">30u</div>
+            <div class="u-tab" onclick="setUnit(40, this)">40u</div>
+            <div class="u-tab" onclick="setUnit(50, this)">50u</div>
+            <div class="u-tab" onclick="setUnit(100, this)">100u</div>
+        </div>
         <input type="text" id="name" placeholder="賽事名稱">
         <select id="res">
-            <option value="17.6">勝 (+17.6u)</option>
-            <option value="-20">負 (-20u)</option>
+            <option id="opt-win" value="17.6">勝 (+17.6u)</option>
+            <option id="opt-lose" value="-20">負 (-20u)</option>
             <option value="0">走 (0u)</option>
         </select>
         <button onclick="save()">保存記錄</button>
@@ -67,8 +74,21 @@
     </div>
 
     <script>
-        let logs = JSON.parse(localStorage.getItem('nba_quant_v3')) || [];
+        let logs = JSON.parse(localStorage.getItem('nba_quant_v4')) || [];
         let currentMode = 'day';
+        let currentUnit = 20;
+
+        function setUnit(u, el) {
+            currentUnit = u;
+            document.querySelectorAll('.u-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            
+            const winProfit = (u * 0.88).toFixed(1);
+            document.getElementById('opt-win').value = winProfit;
+            document.getElementById('opt-win').innerText = `勝 (+${winProfit}u)`;
+            document.getElementById('opt-lose').value = -u;
+            document.getElementById('opt-lose').innerText = `負 (-${u}u)`;
+        }
 
         function getWeekNumber(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -90,7 +110,6 @@
             const tbody = document.getElementById('list');
             tbody.innerHTML = '';
 
-            // 更新日期顯示標題
             const dateEl = document.getElementById('dateRange');
             if(currentMode === 'day') dateEl.innerText = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} (今日)`;
             else if(currentMode === 'week') dateEl.innerText = `${now.getFullYear()} 第 ${getWeekNumber(now)} 週戰報`;
@@ -99,7 +118,6 @@
             logs.forEach((l, index) => {
                 const logDate = new Date(l.date);
                 let inRange = false;
-
                 if (currentMode === 'day') inRange = logDate.toDateString() === now.toDateString();
                 else if (currentMode === 'week') {
                     const oneWeekAgo = new Date(); oneWeekAgo.setDate(now.getDate() - 7);
@@ -127,7 +145,7 @@
             document.getElementById('winCount').innerText = win;
             document.getElementById('winRate').innerText = totalGames > 0 ? Math.round((win / totalGames) * 100) + '%' : '0%';
             document.getElementById('bar').style.width = Math.min(Math.max(0, (t / 300) * 100), 100) + '%';
-            localStorage.setItem('nba_quant_v3', JSON.stringify(logs));
+            localStorage.setItem('nba_quant_v4', JSON.stringify(logs));
         }
 
         function save() {
