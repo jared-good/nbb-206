@@ -2,58 +2,68 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA 極簡操盤室</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NBA 20u 操盤室</title>
     <style>
-        body { font-family: sans-serif; background-color: #121212; color: #fff; padding: 20px; }
-        .card { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; }
-        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 18px; }
-        .progress-bg { background: #333; border-radius: 5px; height: 20px; }
-        .progress-fill { background: #4caf50; height: 100%; width: 0%; transition: 0.3s; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: none; font-size: 16px; box-sizing: border-box; }
+        body { font-family: sans-serif; background-color: #000; color: #fff; padding: 15px; margin: 0; }
+        .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 16px; display: flex; justify-content: space-between; }
+        .progress-bg { background: #333; border-radius: 10px; height: 12px; margin-top: 8px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 0.5s; }
+        .stat-val { font-size: 24px; font-weight: bold; color: #f39c12; }
+        .live-frame { width: 100%; height: 300px; border-radius: 8px; border: 1px solid #444; background: #fff; margin-top: 5px; }
+        iframe { width: 100%; height: 100%; border: none; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
+        input { background: #262626; color: #fff; border: 1px solid #444; }
         button { background: #f39c12; color: #000; font-weight: bold; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 14px; }
-        th, td { text-align: left; padding: 10px 5px; border-bottom: 1px solid #333; }
-        .win { color: #4caf50; } .lose { color: #f44336; }
+        table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; color: #888; padding-bottom: 8px; border-bottom: 1px solid #333; }
+        td { padding: 10px 5px; border-bottom: 1px solid #222; }
+        .win { color: #2ecc71; } .lose { color: #e74c3c; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>🔥 每週目標 300u</h2>
-        <div style="font-size: 20px; margin-bottom: 10px;">目前累計: <span id="total">0</span> u</div>
+        <h2>🔥 戰情進度 (目標 300u)</h2>
+        <div class="stat-val"><span id="total">0</span> <small style="font-size: 14px; color: #888;">u</small></div>
         <div class="progress-bg"><div class="progress-fill" id="bar"></div></div>
     </div>
     <div class="card">
-        <h2>✍️ 記錄結果 (固定 15u)</h2>
-        <input type="text" id="name" placeholder="賽事名稱 (如: 火箭讓分)">
+        <h2>📊 PlaySport 偵查窗 <a href="https://www.playsport.cc/livescore/3?mode=2&gamedate=20260303" style="font-size:12px;color:#3498db;text-decoration:none;" target="_blank">↗️ 全屏</a></h2>
+        <div class="live-frame"><iframe src="https://www.playsport.cc/livescore/3?mode=2&gamedate=20260303"></iframe></div>
+    </div>
+    <div class="card">
+        <h2>✍️ 記錄 20u 結果 (1.88)</h2>
+        <input type="text" id="name" placeholder="賽事名稱">
         <select id="res">
-            <option value="14.25">贏 (+14.25u)</option>
-            <option value="-15">輸 (-15u)</option>
-            <option value="0">平手 (0u)</option>
+            <option value="17.6">勝 (+17.6u)</option>
+            <option value="-20">負 (-20u)</option>
+            <option value="0">走 (0u)</option>
         </select>
         <button onclick="save()">保存記錄</button>
     </div>
     <div class="card">
-        <h2>📋 歷史記錄</h2>
+        <h2>📋 歷史戰報</h2>
         <table><thead><tr><th>賽事</th><th>結果</th><th>損益</th></tr></thead><tbody id="list"></tbody></table>
+        <button onclick="localStorage.clear();location.reload();" style="background:transparent;color:#555;font-size:11px;margin-top:10px;">清空所有數據</button>
     </div>
     <script>
-        let logs = JSON.parse(localStorage.getItem('nba_logs')) || [];
+        let logs = JSON.parse(localStorage.getItem('nba_v2_logs')) || [];
         function render() {
             let t = 0; let h = '';
             logs.forEach(l => {
                 t += l.p;
-                h += `<tr><td>${l.n}</td><td class="${l.p>=0?'win':'lose'}">${l.p>=0?'勝':'負'}</td><td class="${l.p>=0?'win':'lose'}">${l.p}</td></tr>`;
+                h += `<tr><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'勝':(l.p<0?'負':'走')}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p > 0 ? '+' + l.p : l.p}</td></tr>`;
             });
             document.getElementById('list').innerHTML = h;
-            document.getElementById('total').innerText = t.toFixed(2);
-            document.getElementById('bar').style.width = Math.min((t/300)*100, 100) + '%';
-            localStorage.setItem('nba_logs', JSON.stringify(logs));
+            document.getElementById('total').innerText = t.toFixed(1);
+            document.getElementById('bar').style.width = Math.min((t / 300) * 100, 100) + '%';
+            localStorage.setItem('nba_v2_logs', JSON.stringify(logs));
         }
         function save() {
             const n = document.getElementById('name').value;
             const p = parseFloat(document.getElementById('res').value);
-            if(!n) return; logs.unshift({n, p}); render(); document.getElementById('name').value='';
+            if(!n) return; logs.unshift({n, p}); render(); document.getElementById('name').value = '';
         }
         render();
     </script>
