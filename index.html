@@ -3,106 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NBA 終極上帝模式 V8</title>
+    <title>NBA 終極上帝模式 V10</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 10px; margin: 0; min-height: 100vh; box-sizing: border-box; }
         .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #333; position: relative; }
         .card-gold { border: 1px solid #f39c12; box-shadow: 0 0 10px rgba(243,156,18,0.2); }
         .celebrate-300 { animation: rainbow 0.5s infinite; }
         @keyframes rainbow { 0%{border-color:#f39c12;} 33%{border-color:#2ecc71;} 66%{border-color:#e74c3c;} 100%{border-color:#f39c12; box-shadow:0 0 30px #f39c12;} }
-        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 15px; display: flex; justify-content: space-between; }
+        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
         .bankroll { font-size: 28px; font-weight: bold; color: #2ecc71; text-align: center; margin: 5px 0; text-shadow: 0 0 10px rgba(46,204,113,0.3); }
         .report-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
-        .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
+        .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 12px; color: #888; cursor: pointer; border: 1px solid #333; }
         .tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
         .unit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
         .u-tab { padding: 12px 0; background: #262626; border-radius: 6px; text-align: center; font-size: 14px; color: #888; cursor: pointer; border: 1px solid #333; }
-        .u-tab.active { background: #f39c12; color: #000; font-weight: bold; border-color: #f39c12; }
+        .u-tab.active { background: #f39c12; color: #000; font-weight: bold; }
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; text-align: center; }
         .stat-box { background: #222; padding: 8px 4px; border-radius: 8px; border: 1px solid #333; }
-        .stat-label { font-size: 10px; color: #888; margin-bottom: 4px; }
+        .stat-label { font-size: 10px; color: #888; }
         .stat-num { font-size: 15px; font-weight: bold; color: #f39c12; }
-        .progress-container { margin-top: 10px; }
-        .progress-info { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #aaa; }
-        .progress-bg { background: #333; border-radius: 10px; height: 18px; overflow: hidden; border: 1px solid #444; position: relative; }
-        .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 1s ease-in-out; }
-        .progress-text { position: absolute; width: 100%; text-align: center; font-size: 11px; line-height: 18px; font-weight: bold; color: #fff; z-index: 2; text-shadow: 1px 1px 2px #000; }
+        .progress-bg { background: #333; border-radius: 10px; height: 18px; overflow: hidden; border: 1px solid #444; position: relative; margin-top: 5px; }
+        .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 1s; }
+        .progress-text { position: absolute; width: 100%; text-align: center; font-size: 11px; line-height: 18px; font-weight: bold; color: #fff; z-index: 2; }
         input, select, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
         input { background: #262626; color: #fff; border: 1px solid #444; }
         button { background: #f39c12; color: #000; font-weight: bold; cursor: pointer; }
-        table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 12px; }
-        th { color: #666; font-weight: normal; padding-bottom: 8px; }
-        td { padding: 12px 4px; border-bottom: 1px solid #222; text-align: center; }
-        .win { color: #2ecc71; } .lose { color: #e74c3c; } .push { color: #888; }
-        .del-btn { color: #444; background: none; border: none; font-size: 18px; cursor: pointer; }
+        table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 11px; }
+        td { padding: 12px 2px; border-bottom: 1px solid #222; text-align: center; }
+        .win { color: #2ecc71; } .lose { color: #e74c3c; }
+        .del-btn { color: #444; background: none; border: none; font-size: 18px; }
+        #chartContainer { width: 100%; height: 180px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>💰 當前總資產 <button onclick="setBase()" style="width:auto;padding:4px 8px;font-size:10px;margin:0;background:#333;color:#888;">設定初始</button></h2>
+        <h2>💰 總資產庫 <button onclick="setBase()" style="width:auto;padding:4px 8px;font-size:10px;margin:0;background:#333;color:#888;">設定</button></h2>
         <div class="bankroll" id="bankrollDisplay">0.0 u</div>
     </div>
 
     <div class="card card-gold" id="goalCard">
-        <h2 id="goalHeader">🎯 本週獲利進度</h2>
-        <div class="progress-container">
-            <div class="progress-info">
-                <span id="progressLeft">還差 300.0 u 達標</span>
-                <span id="progressPercent">0%</span>
-            </div>
-            <div class="progress-bg">
-                <div class="progress-text" id="weekProgressText">0 / 300u</div>
-                <div class="progress-fill" id="weekBar"></div>
-            </div>
+        <h2>🎯 本週 300u 進度</h2>
+        <div class="progress-bg">
+            <div class="progress-text" id="weekProgressText">0 / 300u</div>
+            <div class="progress-fill" id="weekBar"></div>
         </div>
     </div>
 
     <div class="card">
         <div class="report-tabs">
-            <div class="tab active" onclick="setMode('day', this)">日報結算</div>
-            <div class="tab" onclick="setMode('week', this)">週報結算</div>
+            <div class="tab active" onclick="setMode('day', this)">日</div>
+            <div class="tab" onclick="setMode('week', this)">週</div>
+            <div class="tab" onclick="setMode('month', this)">月</div>
         </div>
         <div class="stat-grid">
-            <div class="stat-box"><div class="stat-label">勝場</div><div id="winCount" class="stat-num">0</div></div>
-            <div class="stat-box"><div class="stat-label">敗場</div><div id="loseCount" class="stat-num win" style="color:#e74c3c">0</div></div>
+            <div class="stat-box"><div class="stat-label">勝</div><div id="winCount" class="stat-num">0</div></div>
+            <div class="stat-box"><div class="stat-label">負</div><div id="loseCount" class="stat-num lose">0</div></div>
             <div class="stat-box"><div class="stat-label">勝率</div><div id="winRate" class="stat-num">0%</div></div>
             <div class="stat-box"><div class="stat-label">盈虧</div><div id="total" class="stat-num">0</div></div>
         </div>
+        <div id="chartContainer">
+            <canvas id="profitChart"></canvas>
+        </div>
     </div>
 
     <div class="card">
-        <h2>✍️ 快速操盤</h2>
+        <h2>✍️ 快速記錄</h2>
         <div class="unit-grid" id="unitGrid"></div>
-        <input type="text" id="name" placeholder="輸入賽事/球隊名稱">
         <div style="display:flex; gap:8px;">
             <select id="odds" onchange="updateWinProfit()" style="flex:1">
-                <option value="1.85">賠率 1.85</option>
-                <option value="1.95" selected>賠率 1.95</option>
-                <option value="2.05">賠率 2.05</option>
+                <option value="1.85">1.85</option>
+                <option value="1.95" selected>1.95</option>
+                <option value="2.05">2.05</option>
             </select>
-            <select id="res" style="flex:1">
-                <option id="opt-win" value="0">勝</option>
-                <option id="opt-lose" value="0">負</option>
-                <option value="0">走水</option>
-            </select>
+            <input type="text" id="name" placeholder="隊名" style="flex:2; margin-top:8px;">
         </div>
-        <button onclick="save()">💾 記錄這場賽事</button>
+        <select id="res">
+            <option id="opt-win" value="0">勝</option>
+            <option id="opt-lose" value="0">負</option>
+            <option value="0">走水</option>
+        </select>
+        <button onclick="save()">💾 存入帳本</button>
     </div>
 
     <div class="card">
-        <table id="historyTable">
-            <thead><tr><th>賽事</th><th>結果</th><th>損益</th><th>刪除</th></tr></thead>
+        <table>
             <tbody id="list"></tbody>
         </table>
-        <button onclick="if(confirm('確定清除所有紀錄？')){localStorage.clear();location.reload();}" style="background:transparent;color:#444;font-size:10px;margin-top:20px;border:1px solid #222;padding:8px;">🗑️ 系統重置</button>
+        <button onclick="if(confirm('清空？')){localStorage.clear();location.reload();}" style="background:transparent;color:#333;font-size:10px;">🗑️ 重置</button>
     </div>
 
     <script>
-        let logs = JSON.parse(localStorage.getItem('nba_god_v8')) || [];
-        let baseMoney = parseFloat(localStorage.getItem('nba_base_v8')) || 0;
-        let currentMode = 'day', currentUnit = 20;
+        let logs = JSON.parse(localStorage.getItem('nba_god_v10')) || [];
+        let baseMoney = parseFloat(localStorage.getItem('nba_base_v10')) || 0;
+        let currentMode = 'day', currentUnit = 20, myChart = null;
 
         function initUnits() {
             const grid = document.getElementById('unitGrid');
@@ -114,11 +110,6 @@
                 grid.appendChild(div);
             }
             updateWinProfit();
-        }
-
-        function setBase() {
-            let m = prompt("請輸入當前帳戶總金額 (USDT):", baseMoney);
-            if(m !== null && !isNaN(m)) { baseMoney = parseFloat(m); localStorage.setItem('nba_base_v8', baseMoney); render(); }
         }
 
         function setUnit(u, el) {
@@ -142,42 +133,37 @@
 
         function render() {
             let t = 0, win = 0, lose = 0, g = 0, allP = 0, weekP = 0; 
-            const now = new Date(), mon = getMonday(now);
-            const tbody = document.getElementById('list');
+            const now = new Date(), mon = getMonday(now), tbody = document.getElementById('list');
             tbody.innerHTML = '';
+            let chartData = [], chartLabels = [], cumulative = 0;
 
-            logs.forEach(l => {
-                allP += l.p;
-                if(new Date(l.date) >= mon) weekP += l.p;
+            logs.forEach(l => allP += l.p);
+            logs.slice().reverse().forEach(l => {
+                const ld = new Date(l.date);
+                let inR = (currentMode==='day' && ld.toDateString()===now.toDateString()) || 
+                          (currentMode==='week' && ld >= mon) || 
+                          (currentMode==='month' && ld.getMonth()===now.getMonth());
+                if(inR) {
+                    cumulative += l.p;
+                    chartData.push(cumulative);
+                    chartLabels.push(`${ld.getMonth()+1}/${ld.getDate()}`);
+                }
+                if(ld >= mon) weekP += l.p;
             });
 
-            // 目標進度優化
-            const left = (300 - weekP).toFixed(1);
-            document.getElementById('progressLeft').innerText = left <= 0 ? "🎉 本週已達標！" : `還差 ${left} u 達標`;
-            const percent = Math.min(Math.max(0, (weekP/300)*100), 100).toFixed(0);
-            document.getElementById('progressPercent').innerText = percent + '%';
+            // 進度條
+            const percent = Math.min(Math.max(0, (weekP/300)*100), 100);
             document.getElementById('weekBar').style.width = percent + '%';
             document.getElementById('weekProgressText').innerText = `${weekP.toFixed(1)} / 300u`;
-
-            if(weekP >= 300) { document.getElementById('goalCard').classList.add('celebrate-300'); }
-            else { document.getElementById('goalCard').classList.remove('celebrate-300'); }
+            if(weekP >= 300) document.getElementById('goalCard').classList.add('celebrate-300');
 
             document.getElementById('bankrollDisplay').innerText = (baseMoney + allP).toFixed(1) + ' u';
             
             logs.forEach((l, i) => {
-                const ld = new Date(l.date); let inR = false;
-                if(currentMode==='day') inR = ld.toDateString()===now.toDateString();
-                else inR = ld >= mon;
-                
-                if(inR) {
-                    t += l.p; 
-                    if(l.p > 0) { win++; g++; } 
-                    else if(l.p < 0) { lose++; g++; }
-                    
-                    const resClass = l.p > 0 ? 'win' : (l.p < 0 ? 'lose' : 'push');
-                    const resText = l.p > 0 ? '勝' : (l.p < 0 ? '負' : '走');
-                    
-                    tbody.innerHTML += `<tr><td>${l.n}</td><td class="${resClass}">${resText}</td><td class="${resClass}">${l.p>0?'+'+l.p:l.p}</td><td><button class="del-btn" onclick="del(${i})">×</button></td></tr>`;
+                const ld = new Date(l.date);
+                if((currentMode==='day' && ld.toDateString()===now.toDateString()) || (currentMode==='week' && ld >= mon) || (currentMode==='month' && ld.getMonth()===now.getMonth())) {
+                    t += l.p; l.p > 0 ? (win++, g++) : l.p < 0 ? (lose++, g++) : 0;
+                    tbody.innerHTML += `<tr><td>${ld.getMonth()+1}/${ld.getDate()} ${ld.getHours()}:${ld.getMinutes()}</td><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td><td><button class="del-btn" onclick="del(${i})">×</button></td></tr>`;
                 }
             });
 
@@ -185,22 +171,29 @@
             document.getElementById('winCount').innerText = win;
             document.getElementById('loseCount').innerText = lose;
             document.getElementById('winRate').innerText = g > 0 ? Math.round((win/g)*100) + '%' : '0%';
-            localStorage.setItem('nba_god_v8', JSON.stringify(logs));
+            localStorage.setItem('nba_god_v10', JSON.stringify(logs));
+            updateChart(chartLabels, chartData);
+        }
+
+        function updateChart(labels, data) {
+            if(myChart) myChart.destroy();
+            myChart = new Chart(document.getElementById('profitChart'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: '盈虧', data, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#555', font: { size: 9 } } }, y: { grid: { color: '#222' }, ticks: { color: '#555', font: { size: 9 } } } } }
+            });
         }
 
         function save() { 
-            const n = document.getElementById('name').value || "未命名賽事"; 
+            const n = document.getElementById('name').value || "未命名"; 
             const p = parseFloat(document.getElementById('res').value); 
             logs.unshift({n, p, date: new Date().toISOString()}); 
-            render(); 
-            document.getElementById('name').value=''; 
+            render(); document.getElementById('name').value=''; 
         }
-
-        function del(i) { if(confirm('確定刪除此筆紀錄？')){logs.splice(i,1); render();} }
+        function del(i) { if(confirm('刪除？')){logs.splice(i,1); render();} }
+        function setBase() { let m = prompt("本金:", baseMoney); if(m!==null){baseMoney=parseFloat(m); localStorage.setItem('nba_base_v10', baseMoney); render();} }
         
-        initUnits();
-        render();
-        if(baseMoney === 0) setTimeout(setBase, 500);
+        initUnits(); render();
     </script>
 </body>
 </html>
