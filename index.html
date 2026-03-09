@@ -3,49 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NBA 終極上帝模式</title>
+    <title>NBA 終極上帝模式 - 霹靂版</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 10px; margin: 0; transition: border 0.3s; border: 2px solid #000; min-height: 100vh; box-sizing: border-box; }
         .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #333; position: relative; overflow: hidden; }
         .card-gold { border: 1px solid #f39c12; box-shadow: 0 0 10px rgba(243,156,18,0.2); }
-        
-        /* 特效面板 CSS */
         .celebrate-200 { border-color: #e74c3c; box-shadow: 0 0 20px rgba(231,76,60,0.6); }
         .celebrate-300 { animation: rainbow 0.5s infinite; }
         @keyframes rainbow { 0%{border-color:#f39c12;} 33%{border-color:#2ecc71;} 66%{border-color:#e74c3c;} 100%{border-color:#f39c12; box-shadow:0 0 30px #f39c12;} }
-        
-        /* 屌炸天螢幕震動 */
         .shake-hard { animation: shake 0.3s infinite; }
-        @keyframes shake { 0%{transform:translate(2px,1px) rotate(0deg);} 10%{transform:translate(-1px,-2px) rotate(-1deg);} 20%{transform:translate(-3px,0px) rotate(1deg);} 30%{transform:translate(0px,2px) rotate(0deg);} 40%{transform:translate(1px,-1px) rotate(1deg);} 50%{transform:translate(-1px,2px) rotate(-1deg);} 60%{transform:translate(-3px,1px) rotate(0deg);} 70%{transform:translate(2px,1px) rotate(-1deg);} 80%{transform:translate(-1px,-1px) rotate(1deg);} 90%{transform:translate(2px,2px) rotate(0deg);} 100%{transform:translate(1px,-2px) rotate(-1deg);} }
-
+        @keyframes shake { 0%{transform:translate(2px,1px) rotate(0deg);} 10%{transform:translate(-1px,-2px) rotate(-1deg);} 100%{transform:translate(1px,-2px) rotate(-1deg);} }
         h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
         .bankroll { font-size: 26px; font-weight: bold; color: #2ecc71; text-align: center; margin: 5px 0; text-shadow: 0 0 10px rgba(46,204,113,0.3); }
         .report-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
         .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #333; }
         .tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
-        .unit-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px; }
-        .u-tab { padding: 8px 0; background: #262626; border-radius: 5px; text-align: center; font-size: 12px; color: #888; cursor: pointer; border: 1px solid #333; }
+        .unit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+        .u-tab { padding: 12px 0; background: #262626; border-radius: 5px; text-align: center; font-size: 14px; color: #888; cursor: pointer; border: 1px solid #333; }
         .u-tab.active { background: #f39c12; color: #000; font-weight: bold; }
-        .u-gold { border-color: #f1c40f; color: #f1c40f; }
-        .disabled { opacity: 0.2; pointer-events: none; }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; text-align: center; }
         .stat-box { background: #222; padding: 8px; border-radius: 8px; border: 1px solid #333; }
         .stat-label { font-size: 11px; color: #888; }
         .stat-num { font-size: 17px; font-weight: bold; color: #f39c12; }
-        .date-display { font-size: 13px; color: #f39c12; margin-bottom: 8px; font-weight: bold; text-align: center; display: flex; justify-content: center; gap: 10px; }
         .progress-bg { background: #333; border-radius: 8px; height: 16px; overflow: hidden; margin-top: 8px; border: 1px solid #444; position: relative; }
         .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
         .progress-text { position: absolute; width: 100%; text-align: center; font-size: 11px; line-height: 16px; font-weight: bold; color: #fff; z-index: 2; text-shadow: 1px 1px 3px #000; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
         input { background: #262626; color: #fff; border: 1px solid #444; }
         button { background: #f39c12; color: #000; font-weight: bold; cursor: pointer; }
-        .btn-small { background: #34495e; color: #eee; font-size: 12px; margin-top: 8px; padding: 10px; border-radius: 6px; }
         table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 12px; }
-        td { padding: 10px 4px; border-bottom: 1px solid #222; }
+        td { padding: 10px 4px; border-bottom: 1px solid #222; text-align: center; }
         .win { color: #2ecc71; } .lose { color: #e74c3c; }
         .del-btn { color: #555; background: none; border: none; font-size: 18px; cursor: pointer; }
-        .tilt-warning { display: none; color: #e74c3c; font-size: 12px; text-align: center; font-weight: bold; margin-bottom: 10px; padding: 5px; border: 1px solid #e74c3c; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -67,9 +57,7 @@
         <div class="report-tabs">
             <div class="tab active" onclick="setMode('day', this)">日報</div>
             <div class="tab" onclick="setMode('week', this)">週報</div>
-            <div class="tab" onclick="setMode('month', this)">月報</div>
         </div>
-        <div class="date-display"><span id="dateRange">---</span> <span id="streakBadge" style="font-size:12px;background:#333;padding:2px 8px;border-radius:10px;"></span></div>
         <div class="stat-grid">
             <div class="stat-box"><div class="stat-label">勝場</div><div id="winCount" class="stat-num">0</div></div>
             <div class="stat-box"><div class="stat-label">勝率</div><div id="winRate" class="stat-num">0%</div></div>
@@ -79,177 +67,127 @@
 
     <div class="card">
         <h2>✍️ 操盤記錄</h2>
-        <div id="tiltMsg" class="tilt-warning">⚠️ 連黑警告！高風險注額已鎖定！</div>
-        <div class="unit-grid">
-            <div class="u-tab u-gold active" id="u15" onclick="setUnit(15, this)">🌟15</div>
-            <div class="u-tab" onclick="setUnit(20, this)">20</div><div class="u-tab" onclick="setUnit(30, this)">30</div>
-            <div class="u-tab" onclick="setUnit(40, this)">40</div><div class="u-tab risk" onclick="setUnit(50, this)">50</div>
-            <div class="u-tab risk" onclick="setUnit(60, this)">60</div><div class="u-tab risk" onclick="setUnit(70, this)">70</div>
-            <div class="u-tab risk" onclick="setUnit(80, this)">80</div><div class="u-tab risk" onclick="setUnit(90, this)">90</div>
-            <div class="u-tab risk" onclick="setUnit(100, this)">100</div>
-        </div>
-        <input type="text" id="name" placeholder="賽事名稱">
+        <div class="unit-grid" id="unitGrid">
+            </div>
+        <input type="text" id="name" placeholder="賽事名稱 (如: 湖人讓分)">
+        <select id="odds" onchange="updateWinProfit()">
+            <option value="1.85">賠率 1.85</option>
+            <option value="1.95" selected>賠率 1.95</option>
+            <option value="2.05">賠率 2.05</option>
+        </select>
         <select id="res">
-            <option id="opt-win" value="13.2">勝 (+13.2u)</option>
-            <option id="opt-lose" value="-15">負 (-15u)</option>
+            <option id="opt-win" value="0">勝 (+0u)</option>
+            <option id="opt-lose" value="0">負 (-0u)</option>
             <option value="0">走 (0u)</option>
         </select>
         <button onclick="save()">💾 保存結果</button>
-        <div style="display:flex;gap:5px;">
-            <div class="btn-small" onclick="importData()" style="flex:1;text-align:center;">導入代碼</div>
-            <div class="btn-small" onclick="exportData()" style="flex:1;text-align:center;background:#27ae60;">備份數據</div>
-        </div>
     </div>
 
     <div class="card">
         <table>
-            <thead><tr><th>日期</th><th>賽事</th><th>結果</th><th>損益</th><th></th></tr></thead>
+            <thead><tr><th>賽事</th><th>結果</th><th>損益</th><th></th></tr></thead>
             <tbody id="list"></tbody>
         </table>
         <button onclick="if(confirm('全部重置？')){localStorage.clear();location.reload();}" style="background:transparent;color:#555;font-size:10px;margin-top:15px;">🗑️ 重置所有數據</button>
     </div>
 
     <script>
-        let logs = JSON.parse(localStorage.getItem('nba_god_v6')) || [];
-        let baseMoney = parseFloat(localStorage.getItem('nba_base_v6')) || 0;
-        let currentMode = 'day', currentUnit = 15;
-        let lastKnownWeekP = null;
+        let logs = JSON.parse(localStorage.getItem('nba_god_v7')) || [];
+        let baseMoney = parseFloat(localStorage.getItem('nba_base_v7')) || 0;
+        let currentMode = 'day', currentUnit = 20;
+
+        function initUnits() {
+            const grid = document.getElementById('unitGrid');
+            for(let u=20; u<=100; u+=10) {
+                let div = document.createElement('div');
+                div.className = `u-tab ${u===20?'active':''}`;
+                div.innerText = u;
+                div.onclick = () => setUnit(u, div);
+                grid.appendChild(div);
+            }
+            updateWinProfit();
+        }
 
         function setBase() {
             let m = prompt("輸入初始本金:", baseMoney);
-            if(m !== null && !isNaN(m)) { baseMoney = parseFloat(m); localStorage.setItem('nba_base_v6', baseMoney); render(); }
+            if(m !== null && !isNaN(m)) { baseMoney = parseFloat(m); localStorage.setItem('nba_base_v7', baseMoney); render(); }
         }
 
         function setUnit(u, el) {
             currentUnit = u;
             document.querySelectorAll('.u-tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
-            const winP = (u * 0.88).toFixed(1);
+            updateWinProfit();
+        }
+
+        function updateWinProfit() {
+            const odds = parseFloat(document.getElementById('odds').value);
+            const winP = (currentUnit * (odds - 1)).toFixed(1);
             document.getElementById('opt-win').value = winP;
             document.getElementById('opt-win').innerText = `勝 (+${winP}u)`;
-            document.getElementById('opt-lose').value = -u;
-            document.getElementById('opt-lose').innerText = `負 (-${u}u)`;
+            document.getElementById('opt-lose').value = -currentUnit;
+            document.getElementById('opt-lose').innerText = `負 (-${currentUnit}u)`;
         }
 
         function getMonday(d) { d = new Date(d); var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6:1); return new Date(d.setDate(diff)).setHours(0,0,0,0); }
-
         function setMode(mode, el) { currentMode = mode; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); render(); }
 
-        // 特效 1：100u 普通特效 (單發底部爆發)
-        function fx100() {
-            confetti({ particleCount: 150, spread: 80, origin: { y: 0.8 }, colors: ['#f1c40f', '#f39c12'] });
-        }
-
-        // 特效 2：200u 有點屌特效 (左右雙管連續發射)
-        function fx200() {
-            var end = Date.now() + 3000;
-            (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors: ['#e74c3c', '#f1c40f'] });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors: ['#e74c3c', '#f1c40f'] });
-                if (Date.now() < end) requestAnimationFrame(frame);
-            }());
-        }
-
-        // 特效 3：300u 屌炸天特效 (螢幕震動 + 滿屏瘋狂煙火)
         function fx300() {
-            document.body.classList.add('shake-hard'); // 觸發螢幕震動
-            var duration = 6000; var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-            function r(min, max) { return Math.random() * (max - min) + min; }
+            document.body.classList.add('shake-hard');
+            var duration = 5000; var animationEnd = Date.now() + duration;
             var interval = setInterval(function() {
                 var timeLeft = animationEnd - Date.now();
                 if (timeLeft <= 0) { clearInterval(interval); document.body.classList.remove('shake-hard'); return; }
-                var pCount = 80 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount: pCount, origin: { x: r(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount: pCount, origin: { x: r(0.7, 0.9), y: Math.random() - 0.2 } }));
-                confetti({ particleCount: 15, spread: 100, origin: {y: 0.6}, colors: ['#FFD700', '#fff']});
+                confetti({ particleCount: 50, spread: 100, origin: {y: 0.6}, colors: ['#FFD700', '#fff']});
             }, 250);
         }
 
         function render() {
             let t = 0, win = 0, g = 0, allP = 0, weekP = 0; 
-            let cWin = 0, cLose = 0;
             const now = new Date(), mon = getMonday(now);
             const tbody = document.getElementById('list');
             tbody.innerHTML = '';
 
-            logs.forEach((l, i) => {
-                let ld = new Date(l.date);
+            logs.forEach(l => {
                 allP += l.p;
-                if(ld >= mon) weekP += l.p;
-                if(i < 5) {
-                    if(l.p > 0 && cLose === 0) cWin++;
-                    else if(l.p < 0 && cWin === 0) cLose++;
-                }
+                if(new Date(l.date) >= mon) weekP += l.p;
             });
 
-            // --- 觸發特效邏輯 ---
-            if(lastKnownWeekP !== null) {
-                if(lastKnownWeekP < 100 && weekP >= 100 && weekP < 200) fx100();
-                if(lastKnownWeekP < 200 && weekP >= 200 && weekP < 300) fx200();
-                if(lastKnownWeekP < 300 && weekP >= 300) fx300();
-            }
-            lastKnownWeekP = weekP; // 記住目前狀態
-
-            // --- 變更面板外觀 ---
-            const goalCard = document.getElementById('goalCard');
-            const goalHeader = document.getElementById('goalHeader');
-            goalCard.className = 'card card-gold'; // reset
-            if(weekP >= 300) {
-                goalHeader.innerHTML = "👑 WEEKLY 300u 超神達標！";
-                goalCard.classList.add('celebrate-300');
-            } else if(weekP >= 200) {
-                goalHeader.innerHTML = "🔥 突破 200u！準備封神！";
-                goalCard.classList.add('celebrate-200');
-            } else if(weekP >= 100) {
-                goalHeader.innerHTML = "💰 100u 第一階段解鎖！";
-            } else {
-                goalHeader.innerHTML = "🎯 本週 300u 目標進度";
-            }
-
-            // 連黑防護
-            const tilt = document.getElementById('tiltMsg');
-            const risks = document.querySelectorAll('.risk');
-            if(cLose >= 3) {
-                tilt.style.display = 'block'; risks.forEach(r => r.classList.add('disabled'));
-            } else {
-                tilt.style.display = 'none'; risks.forEach(r => r.classList.remove('disabled'));
-            }
+            if(weekP >= 300) { fx300(); document.getElementById('goalCard').classList.add('celebrate-300'); }
 
             document.getElementById('bankrollDisplay').innerText = (baseMoney + allP).toFixed(1) + ' u';
             document.getElementById('weekProgressText').innerText = weekP.toFixed(1) + ' / 300u';
             document.getElementById('weekBar').style.width = Math.min(Math.max(0, (weekP/300)*100), 100) + '%';
             
-            const badge = document.getElementById('streakBadge');
-            badge.innerText = cWin >= 2 ? `🔥 ${cWin} 連勝` : (cLose >= 2 ? `❄️ ${cLose} 連黑` : '');
-            badge.className = cWin >= 2 ? 'win' : (cLose >= 2 ? 'lose' : '');
-
-            document.getElementById('dateRange').innerText = currentMode==='day' ? `${now.getMonth()+1}/${now.getDate()}` : (currentMode==='week' ? '本週' : '本月');
-
-            let filteredHTML = '';
             logs.forEach((l, i) => {
                 const ld = new Date(l.date); let inR = false;
                 if(currentMode==='day') inR = ld.toDateString()===now.toDateString();
-                else if(currentMode==='week') inR = ld >= mon;
-                else inR = ld.getMonth()===now.getMonth();
+                else inR = ld >= mon;
                 
                 if(inR) {
                     t += l.p; if(l.p > 0) { win++; g++; } else if(l.p < 0) g++;
-                    filteredHTML += `<tr><td>${ld.getMonth()+1}/${ld.getDate()}</td><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'勝':(l.p<0?'負':'走')}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td><td><button class="del-btn" onclick="del(${i})">×</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'勝':(l.p<0?'負':'走')}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td><td><button class="del-btn" onclick="del(${i})">×</button></td></tr>`;
                 }
             });
-            tbody.innerHTML = filteredHTML;
             document.getElementById('total').innerText = t.toFixed(1);
             document.getElementById('winCount').innerText = win;
             document.getElementById('winRate').innerText = g > 0 ? Math.round((win/g)*100) + '%' : '0%';
-            localStorage.setItem('nba_god_v6', JSON.stringify(logs));
+            localStorage.setItem('nba_god_v7', JSON.stringify(logs));
         }
 
-        function save() { const n = document.getElementById('name').value; const p = parseFloat(document.getElementById('res').value); if(!n) return; logs.unshift({n, p, date: new Date().toISOString()}); render(); document.getElementById('name').value=''; }
+        function save() { 
+            const n = document.getElementById('name').value; 
+            const p = parseFloat(document.getElementById('res').value); 
+            if(!n) return; 
+            logs.unshift({n, p, date: new Date().toISOString()}); 
+            render(); 
+            document.getElementById('name').value=''; 
+        }
         function del(i) { if(confirm('刪除？')){logs.splice(i,1); render();} }
-        function importData() { const r = prompt("貼上 AI 代碼："); if(r){ try{ const d=JSON.parse(r).map(x=>({...x, date:new Date().toISOString()})); logs=d.concat(logs); render(); }catch(e){alert("格式錯誤");} } }
-        function exportData() { const str = JSON.stringify(logs); prompt("複製並備份此代碼：", str); }
-        render(); if(baseMoney === 0) setBase();
+        
+        initUnits();
+        render();
+        if(baseMoney === 0) setBase();
     </script>
 </body>
 </html>
