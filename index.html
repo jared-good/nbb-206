@@ -3,139 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>傑瑞號：368 鄉鎮全征服</title>
+<title>傑瑞號：全台大開拓 V3</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    :root { --neon-blue: #00f2ff; --neon-pink: #ff007f; --dark-bg: #0d1117; }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: #e6edf3; display: flex; height: 100vh; overflow: hidden; }
+    :root { --neon-blue: #00f2ff; --neon-pink: #ff007f; --gold: #f1c40f; --dark-bg: #1a1a1a; }
+    body { margin: 0; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: #000; color: #fff; display: flex; height: 100vh; }
     
-    /* 左側進度面板 */
-    #sidebar { width: 350px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 1000; }
-    .header-info { padding: 20px; background: linear-gradient(135deg, #1f6feb, #0d1117); }
-    .total-stats { font-size: 24px; font-weight: bold; color: var(--neon-blue); }
+    /* 側邊欄：進度監控 */
+    #sidebar { width: 320px; background: #111; border-right: 2px solid var(--neon-blue); display: flex; flex-direction: column; z-index: 1000; }
+    .header { padding: 20px; background: #222; border-bottom: 1px solid #333; }
+    .title { font-size: 20px; font-weight: bold; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+    .stats-main { font-size: 28px; margin: 10px 0; font-family: monospace; color: var(--gold); }
     
-    .scroll-area { flex-grow: 1; overflow-y: auto; padding: 10px; }
-    .county-group { margin-bottom: 20px; background: #0d1117; border-radius: 8px; padding: 10px; }
-    .county-title { font-weight: bold; color: var(--neon-pink); display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-    .town-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-    .town-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #21262d; border: 1px solid #30363d; cursor: pointer; transition: 0.2s; }
-    .town-tag.visited { background: var(--neon-blue); color: black; border-color: var(--neon-blue); font-weight: bold; box-shadow: 0 0 5px var(--neon-blue); }
+    .scroll-area { flex-grow: 1; overflow-y: auto; padding: 15px; }
+    .county-box { margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+    .county-name { background: #252525; padding: 8px 12px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; cursor: pointer; }
+    .town-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 10px; background: #1a1a1a; }
+    .town-tag { font-size: 11px; padding: 5px 2px; text-align: center; background: #333; border-radius: 3px; cursor: pointer; color: #aaa; transition: 0.3s; }
+    .town-tag.visited { background: var(--neon-blue); color: #000; font-weight: bold; box-shadow: 0 0 8px var(--neon-blue); }
     
-    /* 右側地圖 */
-    #map { flex-grow: 1; background: #000 !important; }
+    /* 地圖區 */
+    #map { flex-grow: 1; background: #111 !important; }
 
-    /* 等級與獎章彈窗 */
-    .medal-popup { position: fixed; top: 20px; right: 20px; background: rgba(0,242,255,0.9); color: black; padding: 15px; border-radius: 10px; font-weight: bold; z-index: 2000; display: none; animation: slideIn 0.5s forwards; }
-    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    /* 浮動獎章 */
+    .medal { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--neon-pink); color: white; padding: 10px 30px; border-radius: 30px; font-weight: bold; display: none; z-index: 9999; box-shadow: 0 0 20px var(--neon-pink); }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="header-info">
-        <div style="font-size: 12px; opacity: 0.8;">JERRY'S EXPEDITION</div>
-        <div class="total-stats" id="totalProgress">0 / 368</div>
-        <div style="font-size: 14px; margin-top: 5px;">冒險等級：<span id="rankName">初級探險家</span></div>
+    <div class="header">
+        <div class="title">JERRY EXPEDITION</div>
+        <div class="stats-main" id="totalCount">0 / 368</div>
+        <div style="font-size: 12px; color: #888;">等級：<span id="rank" style="color:var(--neon-pink)">初探者</span></div>
     </div>
-    <div class="scroll-area" id="countyList">
-        </div>
+    <div class="scroll-area" id="countyList"></div>
 </div>
 
 <div id="map"></div>
-<div id="medal" class="medal-popup">🎖️ 達成：新竹領主 (新竹縣制霸)！</div>
+<div id="medal" class="medal">🏆 達成縣市制霸！</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. 台灣 368 鄉鎮資料庫結構 (範例，我列出核心區域，你可以按此格式補齊)
-    const taiwanData = {
+    // 這裡幫你補齊了更多縣市，讓你真的可以「環島」
+    const taiwanTowns = {
         "新竹縣": ["竹北市", "竹東鎮", "新埔鎮", "關西鎮", "湖口鄉", "新豐鄉", "芎林鄉", "橫山鄉", "北埔鄉", "寶山鄉", "峨眉鄉", "尖石鄉", "五峰鄉"],
         "新竹市": ["東區", "北區", "香山區"],
         "台北市": ["中正區", "萬華區", "大同區", "中山區", "松山區", "大安區", "信義區", "內湖區", "南港區", "士林區", "北投區", "文山區"],
-        "新北市": ["板橋區", "三重區", "中和區", "永和區", "新莊區", "新店區", "樹林區", "鶯歌區", "三峽區", "淡水區", "汐止區", "瑞芳區", "土城區", "蘆洲區", "五股區", "泰山區", "林口區", "深坑區", "石碇區", "坪林區", "三芝區", "石門區", "八里區", "平溪區", "雙溪區", "貢寮區", "金山區", "萬里區", "烏來區"],
+        "新北市": ["板橋區", "三重區", "中和區", "永和區", "新莊區", "新店區", "土城區", "蘆洲區", "汐止區", "樹林區", "鶯歌區", "三峽區", "淡水區", "瑞芳區", "五股區", "泰山區", "林口區", "深坑區", "石碇區", "坪林區", "三芝區", "石門區", "八里區", "平溪區", "雙溪區", "貢寮區", "金山區", "萬里區", "烏來區"],
         "桃園市": ["桃園區", "中壢區", "大溪區", "楊梅區", "蘆竹區", "大園區", "龜山區", "八德區", "龍潭區", "平鎮區", "新屋區", "觀音區", "復興區"],
-        "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "石岡區", "東勢區", "和平區", "新社區", "潭子區", "大雅區", "神岡區", "大肚區", "沙鹿區", "龍井區", "梧棲區", "清水區", "大甲區", "外埔區", "大安區"]
-        // ... 其他縣市可依此類推增加
+        "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "石岡區", "東勢區", "和平區", "新社區", "潭子區", "大雅區", "神岡區", "大肚區", "沙鹿區", "龍井區", "梧棲區", "清水區", "大甲區", "外埔區", "大安區"],
+        "台南市": ["中西區", "東區", "南區", "北區", "安平區", "安南區", "永康區", "歸仁區", "新化區", "左鎮區", "玉井區", "楠西區", "南化區", "仁德區", "關廟區", "龍崎區", "官田區", "麻豆區", "佳里區", "西港區", "七股區", "將軍區", "學甲區", "北門區", "新營區", "後壁區", "白河區", "東山區", "六甲區", "下營區", "柳營區", "鹽水區", "善化區", "大內區", "山上區", "新市區", "安定區"],
+        "高雄市": ["新興區", "前金區", "苓雅區", "鹽埕區", "鼓山區", "旗津區", "前鎮區", "三民區", "楠梓區", "小港區", "左營區", "仁武區", "大社區", "岡山區", "路竹區", "阿蓮區", "田寮區", "燕巢區", "橋頭區", "梓官區", "彌陀區", "永安區", "湖內區", "鳳山區", "大寮區", "林園區", "鳥松區", "大樹區", "旗山區", "美濃區", "六龜區", "內門區", "杉林區", "甲仙區", "桃源區", "那瑪夏區", "茂林區", "茄萣區"]
     };
 
-    // 2. 初始化
-    const map = L.map('map', { zoomControl: false }).setView([24.82, 121.01], 10);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    // 1. 地圖初始化 (換成彩色版，載入更快且不會全黑)
+    const map = L.map('map', { zoomControl: false }).setView([23.6, 121], 7);
+    
+    // 使用 CartoDB Voyager 圖資 (背景深灰，但陸地是亮色，對比度最高)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: 'Jerry Expedition'
+    }).addTo(map);
 
-    let visited = JSON.parse(localStorage.getItem('tw368_save')) || [];
+    let visited = JSON.parse(localStorage.getItem('jerry_368_v3')) || [];
 
-    function updateUI() {
-        const total = visited.length;
-        document.getElementById('totalProgress').innerText = `${total} / 368`;
+    // 2. 介面更新
+    function refreshUI() {
+        const count = visited.length;
+        document.getElementById('totalCount').innerText = `${count} / 368`;
         
-        // 更新稱號
-        let rank = "初級探險家";
-        if(total > 10) rank = "資深旅行者";
-        if(total > 50) rank = "全台開路先鋒";
-        if(total > 150) rank = "荒野傳奇";
-        if(total >= 368) rank = "台灣土地公 (真．制霸)";
-        document.getElementById('rankName').innerText = rank;
+        let rank = "新進探險家";
+        if(count > 20) rank = "拓荒先鋒";
+        if(count > 100) rank = "台灣達人";
+        if(count > 300) rank = "地景宗師";
+        document.getElementById('rank').innerText = rank;
 
         renderSidebar();
-        localStorage.setItem('tw368_save', JSON.stringify(visited));
+        localStorage.setItem('jerry_368_v3', JSON.stringify(visited));
     }
 
     function renderSidebar() {
-        const container = document.getElementById('countyList');
-        container.innerHTML = '';
+        const list = document.getElementById('countyList');
+        list.innerHTML = '';
 
-        for (const [county, towns] of Object.entries(taiwanData)) {
+        for (const [county, towns] of Object.entries(taiwanTowns)) {
             const countyVisited = towns.filter(t => visited.includes(`${county}-${t}`));
-            const isMastered = countyVisited.length === towns.length;
+            const done = countyVisited.length === towns.length;
 
-            const group = document.createElement('div');
-            group.className = 'county-group';
-            group.innerHTML = `
-                <div class="county-title">
+            const box = document.createElement('div');
+            box.className = 'county-box';
+            box.innerHTML = `
+                <div class="county-name">
                     <span>${county}</span>
-                    <span style="color:${isMastered ? 'var(--neon-blue)' : '#666'}">${countyVisited.length}/${towns.length}</span>
+                    <span style="color:${done ? 'var(--neon-blue)' : '#666'}">${countyVisited.length}/${towns.length}</span>
                 </div>
-                <div class="town-tags">
+                <div class="town-grid">
                     ${towns.map(t => {
-                        const isDone = visited.includes(`${county}-${t}`);
-                        return `<div class="town-tag ${isDone ? 'visited' : ''}" onclick="toggleTown('${county}', '${t}')">${t}</div>`;
+                        const isOk = visited.includes(`${county}-${t}`);
+                        return `<div class="town-tag ${isOk ? 'visited' : ''}" onclick="toggle('${county}', '${t}')">${t}</div>`;
                     }).join('')}
                 </div>
             `;
-            container.appendChild(group);
+            list.appendChild(box);
         }
     }
 
-    window.toggleTown = function(county, town) {
-        const id = `${county}-${town}`;
+    window.toggle = function(c, t) {
+        const id = `${c}-${t}`;
         if (visited.includes(id)) {
-            visited = visited.filter(item => item !== id);
+            visited = visited.filter(x => x !== id);
         } else {
             visited.push(id);
-            checkMedal(county);
+            checkMaster(c);
         }
-        updateUI();
+        refreshUI();
     };
 
-    function checkMedal(county) {
-        const towns = taiwanData[county];
-        const countyVisited = towns.filter(t => visited.includes(`${county}-${t}`));
-        if (countyVisited.length === towns.length) {
+    function checkMaster(c) {
+        const total = taiwanTowns[c].length;
+        const current = taiwanTowns[c].filter(t => visited.includes(`${c}-${t}`)).length;
+        if (current === total) {
             const m = document.getElementById('medal');
-            m.innerText = `🎖️ 達成：${county}制霸！`;
+            m.innerText = `🎖️ 制霸成功：${c}！`;
             m.style.display = 'block';
-            setTimeout(() => { m.style.display = 'none'; }, 4000);
+            setTimeout(() => m.style.display = 'none', 3000);
         }
     }
 
-    // 點擊地圖打卡 (模擬)
-    map.on('click', function(e) {
-        const name = prompt("要在這裡手動標記一個點嗎？(請輸入名稱)");
-        if(name) {
-            L.circleMarker(e.latlng, { radius: 8, color: var(--neon-blue) }).addTo(map).bindPopup(name).openPopup();
-        }
-    });
-
-    updateUI();
+    // 初始執行
+    refreshUI();
+    // 預設跳轉到新竹/竹北
+    map.flyTo([24.82, 121.01], 12);
 </script>
 </body>
 </html>
