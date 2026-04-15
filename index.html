@@ -2,160 +2,140 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>傑瑞號：台灣大開拓</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>傑瑞號：368 鄉鎮全征服</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    :root { --neon-blue: #00d2ff; --neon-pink: #ff007f; --gold: #f39c12; --bg-dark: #0a0e14; }
-    body { margin: 0; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: var(--bg-dark); color: white; overflow: hidden; }
+    :root { --neon-blue: #00f2ff; --neon-pink: #ff007f; --dark-bg: #0d1117; }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: #e6edf3; display: flex; height: 100vh; overflow: hidden; }
     
-    /* 遊戲頂欄 */
-    #game-ui { position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; pointer-events: none; }
-    .status-bar { display: flex; justify-content: space-between; padding: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); pointer-events: auto; }
-    .player-info { display: flex; flex-direction: column; gap: 5px; }
-    .lv-tag { background: var(--neon-blue); color: black; font-weight: 900; padding: 2px 10px; border-radius: 4px; font-size: 14px; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
-    .xp-bar-container { width: 150px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 5px; border: 1px solid var(--neon-blue); }
-    #xp-fill { height: 100%; background: var(--neon-blue); width: 0%; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-    /* 地圖區域 */
-    #map { height: 100vh; width: 100vw; background: #000 !important; }
+    /* 左側進度面板 */
+    #sidebar { width: 350px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 1000; }
+    .header-info { padding: 20px; background: linear-gradient(135deg, #1f6feb, #0d1117); }
+    .total-stats { font-size: 24px; font-weight: bold; color: var(--neon-blue); }
     
-    /* 底部任務選單 */
-    .quest-sheet { position: absolute; bottom: 0; left: 0; width: 100%; height: 250px; background: rgba(10, 14, 20, 0.95); border-top: 2px solid var(--neon-blue); z-index: 1001; transition: transform 0.3s; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 20px 20px 0 0; }
-    .sheet-handle { width: 40px; height: 5px; background: #333; margin: -5px auto 10px; border-radius: 5px; }
-    .quest-list { overflow-y: auto; flex-grow: 1; }
-    .quest-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(0, 210, 255, 0.2); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .quest-card.locked { opacity: 0.5; filter: grayscale(1); }
-    .quest-details b { color: var(--neon-blue); font-size: 16px; }
-    .quest-details p { margin: 5px 0 0; font-size: 12px; color: #aaa; }
-    .btn-action { background: var(--neon-blue); border: none; color: black; font-weight: bold; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-    .btn-done { background: var(--gold); }
+    .scroll-area { flex-grow: 1; overflow-y: auto; padding: 10px; }
+    .county-group { margin-bottom: 20px; background: #0d1117; border-radius: 8px; padding: 10px; }
+    .county-title { font-weight: bold; color: var(--neon-pink); display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    .town-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .town-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #21262d; border: 1px solid #30363d; cursor: pointer; transition: 0.2s; }
+    .town-tag.visited { background: var(--neon-blue); color: black; border-color: var(--neon-blue); font-weight: bold; box-shadow: 0 0 5px var(--neon-blue); }
+    
+    /* 右側地圖 */
+    #map { flex-grow: 1; background: #000 !important; }
 
-    /* 特效 */
-    .leaflet-container { background: #000 !important; }
-    .pulse { animation: pulse-animation 2s infinite; }
-    @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0px rgba(0, 210, 255, 0.4); } 100% { box-shadow: 0 0 0 20px rgba(0, 210, 255, 0); } }
+    /* 等級與獎章彈窗 */
+    .medal-popup { position: fixed; top: 20px; right: 20px; background: rgba(0,242,255,0.9); color: black; padding: 15px; border-radius: 10px; font-weight: bold; z-index: 2000; display: none; animation: slideIn 0.5s forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 </style>
 </head>
 <body>
 
-<div id="game-ui">
-    <div class="status-bar">
-        <div class="player-info">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span class="lv-tag" id="lv-text">LV. 01</span>
-                <span id="rank-text" style="color: var(--neon-blue); letter-spacing: 2px; font-weight: bold;">新進探險員</span>
-            </div>
-            <div class="xp-bar-container"><div id="xp-fill"></div></div>
-        </div>
-        <div style="text-align: right;">
-            <div id="total-xp" style="font-family: monospace; font-size: 18px; color: var(--gold);">0 XP</div>
-            <div style="font-size: 10px; color: #666;">JERRY'S TRAIN ADVENTURE</div>
-        </div>
+<div id="sidebar">
+    <div class="header-info">
+        <div style="font-size: 12px; opacity: 0.8;">JERRY'S EXPEDITION</div>
+        <div class="total-stats" id="totalProgress">0 / 368</div>
+        <div style="font-size: 14px; margin-top: 5px;">冒險等級：<span id="rankName">初級探險家</span></div>
     </div>
+    <div class="scroll-area" id="countyList">
+        </div>
 </div>
 
 <div id="map"></div>
-
-<div class="quest-sheet">
-    <div class="sheet-handle"></div>
-    <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--neon-pink);">主線任務：開拓台灣疆域</div>
-    <div class="quest-list" id="quest-list">
-        </div>
-</div>
+<div id="medal" class="medal-popup">🎖️ 達成：新竹領主 (新竹縣制霸)！</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. 豪華版景點資料庫 (結合你的愛好)
-    const quests = [
-        { id: 1, name: "竹北：新瓦屋尋寶", lat: 24.811, lng: 121.029, tag: "放電", xp: 150, info: "適合溜小孩的客家聚落" },
-        { id: 2, name: "竹北：AI 智慧園區公園", lat: 24.829, lng: 121.015, tag: "放電", xp: 200, info: "竹北最強小孩放電神點" },
-        { id: 3, name: "新竹：城隍廟攻略", lat: 24.802, lng: 120.965, tag: "美食", xp: 100, info: "肉圓與乾麵的頂尖對決" },
-        { id: 4, name: "新竹：十八尖山挑戰", lat: 24.795, lng: 120.985, tag: "運動", xp: 300, info: "新竹人的小百岳，爬完看 NBA 剛好" },
-        { id: 5, name: "苗栗：蘇維拉莊園", lat: 24.597, lng: 121.011, tag: "旅遊", xp: 500, info: "山城美景，開拓視野" },
-        { id: 6, name: "台北：信義區財富密碼", lat: 25.033, lng: 121.564, tag: "科技", xp: 600, info: "觀察 BTC 實體提款機與潮流" },
-        { id: 7, name: "台中：逢甲夜市獵食", lat: 24.179, lng: 120.645, tag: "美食", xp: 450, info: "在夜市裡思考合約開幾倍" }
-    ];
-
-    // 2. 初始化黑魂風地圖 (CartoDB DarkMatter)
-    const map = L.map('map', { zoomControl: false }).setView([24.82, 121.01], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: 'Jerry Train'
-    }).addTo(map);
-
-    let save = JSON.parse(localStorage.getItem('jerry_adventure_v1')) || { visited: [], totalXp: 0 };
-
-    // 3. 渲染邏輯
-    function init() {
-        renderMap();
-        renderList();
-        updateUI();
-    }
-
-    function renderMap() {
-        quests.forEach(q => {
-            const isDone = save.visited.includes(q.id);
-            const icon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background:${isDone ? 'var(--neon-blue)' : '#333'}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow: 0 0 10px ${isDone ? 'var(--neon-blue)' : '#000'}" class="${!isDone ? 'pulse' : ''}"></div>`,
-                iconSize: [12, 12]
-            });
-
-            L.marker([q.lat, q.lng], { icon }).addTo(map)
-                .bindPopup(`<b style="color:black">${q.name}</b><br><span style="color:gray">${q.info}</span>`);
-        });
-    }
-
-    function renderList() {
-        const list = document.getElementById('quest-list');
-        list.innerHTML = '';
-        quests.forEach(q => {
-            const isDone = save.visited.includes(q.id);
-            const card = document.createElement('div');
-            card.className = `quest-card ${isDone ? '' : ''}`;
-            card.innerHTML = `
-                <div class="quest-details">
-                    <span style="font-size:10px; color:var(--neon-pink)">[${q.tag}]</span><br>
-                    <b>${q.name}</b>
-                    <p>${q.info}</p>
-                </div>
-                <div>
-                    ${isDone ? '<button class="btn-action btn-done">已拓荒</button>' : `<button class="btn-action" onclick="claim(${q.id})">+${q.xp}XP</button>`}
-                </div>
-            `;
-            list.appendChild(card);
-        });
-    }
-
-    function updateUI() {
-        const lv = Math.floor(save.totalXp / 500) + 1;
-        const currentXp = save.totalXp % 500;
-        const xpPercent = (currentXp / 500) * 100;
-
-        document.getElementById('lv-text').innerText = `LV. ${lv.toString().padStart(2, '0')}`;
-        document.getElementById('xp-fill').style.width = `${xpPercent}%`;
-        document.getElementById('total-xp').innerText = `${save.totalXp} XP`;
-        
-        if (lv >= 5) document.getElementById('rank-text').innerText = "專業領航員";
-        if (lv >= 10) document.getElementById('rank-text').innerText = "台灣探索王";
-    }
-
-    window.claim = function(id) {
-        const quest = quests.find(q => q.id === id);
-        if (!save.visited.includes(id)) {
-            save.visited.push(id);
-            save.totalXp += quest.xp;
-            localStorage.setItem('jerry_adventure_v1', JSON.stringify(save));
-            
-            // 慶祝特效
-            map.flyTo([quest.lat, quest.lng], 15);
-            alert(`🔥 拓荒成功！獲得 ${quest.xp} 經驗值！\n繼續朝下一個目標前進吧，傑瑞！`);
-            
-            init();
-        }
+    // 1. 台灣 368 鄉鎮資料庫結構 (範例，我列出核心區域，你可以按此格式補齊)
+    const taiwanData = {
+        "新竹縣": ["竹北市", "竹東鎮", "新埔鎮", "關西鎮", "湖口鄉", "新豐鄉", "芎林鄉", "橫山鄉", "北埔鄉", "寶山鄉", "峨眉鄉", "尖石鄉", "五峰鄉"],
+        "新竹市": ["東區", "北區", "香山區"],
+        "台北市": ["中正區", "萬華區", "大同區", "中山區", "松山區", "大安區", "信義區", "內湖區", "南港區", "士林區", "北投區", "文山區"],
+        "新北市": ["板橋區", "三重區", "中和區", "永和區", "新莊區", "新店區", "樹林區", "鶯歌區", "三峽區", "淡水區", "汐止區", "瑞芳區", "土城區", "蘆洲區", "五股區", "泰山區", "林口區", "深坑區", "石碇區", "坪林區", "三芝區", "石門區", "八里區", "平溪區", "雙溪區", "貢寮區", "金山區", "萬里區", "烏來區"],
+        "桃園市": ["桃園區", "中壢區", "大溪區", "楊梅區", "蘆竹區", "大園區", "龜山區", "八德區", "龍潭區", "平鎮區", "新屋區", "觀音區", "復興區"],
+        "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "石岡區", "東勢區", "和平區", "新社區", "潭子區", "大雅區", "神岡區", "大肚區", "沙鹿區", "龍井區", "梧棲區", "清水區", "大甲區", "外埔區", "大安區"]
+        // ... 其他縣市可依此類推增加
     };
 
-    init();
+    // 2. 初始化
+    const map = L.map('map', { zoomControl: false }).setView([24.82, 121.01], 10);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+    let visited = JSON.parse(localStorage.getItem('tw368_save')) || [];
+
+    function updateUI() {
+        const total = visited.length;
+        document.getElementById('totalProgress').innerText = `${total} / 368`;
+        
+        // 更新稱號
+        let rank = "初級探險家";
+        if(total > 10) rank = "資深旅行者";
+        if(total > 50) rank = "全台開路先鋒";
+        if(total > 150) rank = "荒野傳奇";
+        if(total >= 368) rank = "台灣土地公 (真．制霸)";
+        document.getElementById('rankName').innerText = rank;
+
+        renderSidebar();
+        localStorage.setItem('tw368_save', JSON.stringify(visited));
+    }
+
+    function renderSidebar() {
+        const container = document.getElementById('countyList');
+        container.innerHTML = '';
+
+        for (const [county, towns] of Object.entries(taiwanData)) {
+            const countyVisited = towns.filter(t => visited.includes(`${county}-${t}`));
+            const isMastered = countyVisited.length === towns.length;
+
+            const group = document.createElement('div');
+            group.className = 'county-group';
+            group.innerHTML = `
+                <div class="county-title">
+                    <span>${county}</span>
+                    <span style="color:${isMastered ? 'var(--neon-blue)' : '#666'}">${countyVisited.length}/${towns.length}</span>
+                </div>
+                <div class="town-tags">
+                    ${towns.map(t => {
+                        const isDone = visited.includes(`${county}-${t}`);
+                        return `<div class="town-tag ${isDone ? 'visited' : ''}" onclick="toggleTown('${county}', '${t}')">${t}</div>`;
+                    }).join('')}
+                </div>
+            `;
+            container.appendChild(group);
+        }
+    }
+
+    window.toggleTown = function(county, town) {
+        const id = `${county}-${town}`;
+        if (visited.includes(id)) {
+            visited = visited.filter(item => item !== id);
+        } else {
+            visited.push(id);
+            checkMedal(county);
+        }
+        updateUI();
+    };
+
+    function checkMedal(county) {
+        const towns = taiwanData[county];
+        const countyVisited = towns.filter(t => visited.includes(`${county}-${t}`));
+        if (countyVisited.length === towns.length) {
+            const m = document.getElementById('medal');
+            m.innerText = `🎖️ 達成：${county}制霸！`;
+            m.style.display = 'block';
+            setTimeout(() => { m.style.display = 'none'; }, 4000);
+        }
+    }
+
+    // 點擊地圖打卡 (模擬)
+    map.on('click', function(e) {
+        const name = prompt("要在這裡手動標記一個點嗎？(請輸入名稱)");
+        if(name) {
+            L.circleMarker(e.latlng, { radius: 8, color: var(--neon-blue) }).addTo(map).bindPopup(name).openPopup();
+        }
+    });
+
+    updateUI();
 </script>
 </body>
 </html>
