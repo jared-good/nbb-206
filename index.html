@@ -1,199 +1,86 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NBA 終極上帝模式 V10</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: -apple-system, sans-serif; background-color: #000; color: #fff; padding: 10px; margin: 0; min-height: 100vh; box-sizing: border-box; }
-        .card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #333; position: relative; }
-        .card-gold { border: 1px solid #f39c12; box-shadow: 0 0 10px rgba(243,156,18,0.2); }
-        .celebrate-300 { animation: rainbow 0.5s infinite; }
-        @keyframes rainbow { 0%{border-color:#f39c12;} 33%{border-color:#2ecc71;} 66%{border-color:#e74c3c;} 100%{border-color:#f39c12; box-shadow:0 0 30px #f39c12;} }
-        h2 { color: #f39c12; margin: 0 0 10px 0; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .bankroll { font-size: 28px; font-weight: bold; color: #2ecc71; text-align: center; margin: 5px 0; text-shadow: 0 0 10px rgba(46,204,113,0.3); }
-        .report-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
-        .tab { flex: 1; padding: 10px; background: #262626; border-radius: 6px; text-align: center; font-size: 12px; color: #888; cursor: pointer; border: 1px solid #333; }
-        .tab.active { background: #f39c12; color: #000; font-weight: bold; border: none; }
-        .unit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
-        .u-tab { padding: 12px 0; background: #262626; border-radius: 6px; text-align: center; font-size: 14px; color: #888; cursor: pointer; border: 1px solid #333; }
-        .u-tab.active { background: #f39c12; color: #000; font-weight: bold; }
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; text-align: center; }
-        .stat-box { background: #222; padding: 8px 4px; border-radius: 8px; border: 1px solid #333; }
-        .stat-label { font-size: 10px; color: #888; }
-        .stat-num { font-size: 15px; font-weight: bold; color: #f39c12; }
-        .progress-bg { background: #333; border-radius: 10px; height: 18px; overflow: hidden; border: 1px solid #444; position: relative; margin-top: 5px; }
-        .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; width: 0%; transition: 1s; }
-        .progress-text { position: absolute; width: 100%; text-align: center; font-size: 11px; line-height: 18px; font-weight: bold; color: #fff; z-index: 2; }
-        input, select, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
-        input { background: #262626; color: #fff; border: 1px solid #444; }
-        button { background: #f39c12; color: #000; font-weight: bold; cursor: pointer; }
-        table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 11px; }
-        td { padding: 12px 2px; border-bottom: 1px solid #222; text-align: center; }
-        .win { color: #2ecc71; } .lose { color: #e74c3c; }
-        .del-btn { color: #444; background: none; border: none; font-size: 18px; }
-        #chartContainer { width: 100%; height: 180px; margin-top: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台灣鄉鎮攻略</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+  #map { flex-grow: 1; }
+  .menu { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .stats { font-size: 14px; }
+  .spot-btn { background: #007AFF; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px; }
+  .reset-btn { background: #ff3b30; font-size: 10px; border: none; color: white; padding: 3px 8px; border-radius: 3px; }
+</style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>💰 總資產庫 <button onclick="setBase()" style="width:auto;padding:4px 8px;font-size:10px;margin:0;background:#333;color:#888;">設定</button></h2>
-        <div class="bankroll" id="bankrollDisplay">0.0 u</div>
-    </div>
+<div class="menu">
+  <div><b>🇹🇼 台灣攻略</b> <span class="stats" id="status">已解鎖: 0</span></div>
+  <button class="reset-btn" onclick="clearData()">重設</button>
+</div>
 
-    <div class="card card-gold" id="goalCard">
-        <h2>🎯 本週 300u 進度</h2>
-        <div class="progress-bg">
-            <div class="progress-text" id="weekProgressText">0 / 300u</div>
-            <div class="progress-fill" id="weekBar"></div>
-        </div>
-    </div>
+<div id="map"></div>
 
-    <div class="card">
-        <div class="report-tabs">
-            <div class="tab active" onclick="setMode('day', this)">日</div>
-            <div class="tab" onclick="setMode('week', this)">週</div>
-            <div class="tab" onclick="setMode('month', this)">月</div>
-        </div>
-        <div class="stat-grid">
-            <div class="stat-box"><div class="stat-label">勝</div><div id="winCount" class="stat-num">0</div></div>
-            <div class="stat-box"><div class="stat-label">負</div><div id="loseCount" class="stat-num lose">0</div></div>
-            <div class="stat-box"><div class="stat-label">勝率</div><div id="winRate" class="stat-num">0%</div></div>
-            <div class="stat-box"><div class="stat-label">盈虧</div><div id="total" class="stat-num">0</div></div>
-        </div>
-        <div id="chartContainer">
-            <canvas id="profitChart"></canvas>
-        </div>
-    </div>
+<div style="padding: 10px; background: #eee; overflow-x: auto; white-space: nowrap;">
+  <span style="font-size: 12px; font-weight: bold;">快捷打卡：</span>
+  <button class="spot-btn" onclick="checkIn('竹北市', 24.811, 121.029, '新瓦屋')">竹北新瓦屋</button>
+  <button class="spot-btn" onclick="checkIn('新竹市', 24.802, 120.965, '城隍廟')">新竹城隍廟</button>
+  <button class="spot-btn" onclick="checkIn('淡水區', 25.182, 121.411, '漁人碼頭')">淡水碼頭</button>
+  <button class="spot-btn" onclick="checkIn('恆春鎮', 21.946, 120.796, '墾丁大街')">墾丁</button>
+</div>
 
-    <div class="card">
-        <h2>✍️ 快速記錄</h2>
-        <div class="unit-grid" id="unitGrid"></div>
-        <div style="display:flex; gap:8px;">
-            <select id="odds" onchange="updateWinProfit()" style="flex:1">
-                <option value="1.85">1.85</option>
-                <option value="1.95" selected>1.95</option>
-                <option value="2.05">2.05</option>
-            </select>
-            <input type="text" id="name" placeholder="隊名" style="flex:2; margin-top:8px;">
-        </div>
-        <select id="res">
-            <option id="opt-win" value="0">勝</option>
-            <option id="opt-lose" value="0">負</option>
-            <option value="0">走水</option>
-        </select>
-        <button onclick="save()">💾 存入帳本</button>
-    </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // 1. 初始化地圖 (預設新竹)
+  const map = L.map('map').setView([24.82, 121.01], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    <div class="card">
-        <table>
-            <tbody id="list"></tbody>
-        </table>
-        <button onclick="if(confirm('清空？')){localStorage.clear();location.reload();}" style="background:transparent;color:#333;font-size:10px;">🗑️ 重置</button>
-    </div>
+  // 2. 讀取資料
+  let visited = JSON.parse(localStorage.getItem('tw_checkins')) || {};
 
-    <script>
-        let logs = JSON.parse(localStorage.getItem('nba_god_v10')) || [];
-        let baseMoney = parseFloat(localStorage.getItem('nba_base_v10')) || 0;
-        let currentMode = 'day', currentUnit = 20, myChart = null;
+  function updateUI() {
+    const count = Object.keys(visited).length;
+    document.getElementById('status').innerText = `已解鎖: ${count} 鄉鎮區`;
+    localStorage.setItem('tw_checkins', JSON.stringify(visited));
+  }
 
-        function initUnits() {
-            const grid = document.getElementById('unitGrid');
-            for(let u=20; u<=100; u+=10) {
-                let div = document.createElement('div');
-                div.className = `u-tab ${u===20?'active':''}`;
-                div.innerText = u + 'u';
-                div.onclick = () => setUnit(u, div);
-                grid.appendChild(div);
-            }
-            updateWinProfit();
-        }
+  // 3. 打卡功能
+  function checkIn(areaName, lat, lng, spotName) {
+    if (!visited[areaName]) {
+      visited[areaName] = { lat, lng, spot: spotName };
+      L.marker([lat, lng]).addTo(map).bindPopup(`<b>${areaName}</b><br>${spotName}`).openPopup();
+      map.flyTo([lat, lng], 13);
+      updateUI();
+    } else {
+      alert('這個區你已經去過囉！');
+    }
+  }
 
-        function setUnit(u, el) {
-            currentUnit = u;
-            document.querySelectorAll('.u-tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            updateWinProfit();
-        }
+  // 4. 點擊地圖任意處打卡
+  map.on('click', function(e) {
+    const { lat, lng } = e.latlng;
+    const customName = prompt('發現新地點！請輸入鄉鎮或景點名稱:');
+    if (customName) {
+      checkIn(customName, lat, lng, '手動標記');
+    }
+  });
 
-        function updateWinProfit() {
-            const odds = parseFloat(document.getElementById('odds').value);
-            const winP = (currentUnit * (odds - 1)).toFixed(1);
-            document.getElementById('opt-win').value = winP;
-            document.getElementById('opt-win').innerText = `勝 (+${winP}u)`;
-            document.getElementById('opt-lose').value = -currentUnit;
-            document.getElementById('opt-lose').innerText = `負 (-${currentUnit}u)`;
-        }
+  // 5. 載入舊有標記
+  Object.keys(visited).forEach(key => {
+    const item = visited[key];
+    L.marker([item.lat, item.lng]).addTo(map).bindPopup(`<b>${key}</b><br>${item.spot}`);
+  });
 
-        function getMonday(d) { d = new Date(d); var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6:1); return new Date(d.setDate(diff)).setHours(0,0,0,0); }
-        function setMode(mode, el) { currentMode = mode; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); render(); }
+  function clearData() {
+    if(confirm('確定清除紀錄？')) {
+      localStorage.removeItem('tw_checkins');
+      location.reload();
+    }
+  }
 
-        function render() {
-            let t = 0, win = 0, lose = 0, g = 0, allP = 0, weekP = 0; 
-            const now = new Date(), mon = getMonday(now), tbody = document.getElementById('list');
-            tbody.innerHTML = '';
-            let chartData = [], chartLabels = [], cumulative = 0;
-
-            logs.forEach(l => allP += l.p);
-            logs.slice().reverse().forEach(l => {
-                const ld = new Date(l.date);
-                let inR = (currentMode==='day' && ld.toDateString()===now.toDateString()) || 
-                          (currentMode==='week' && ld >= mon) || 
-                          (currentMode==='month' && ld.getMonth()===now.getMonth());
-                if(inR) {
-                    cumulative += l.p;
-                    chartData.push(cumulative);
-                    chartLabels.push(`${ld.getMonth()+1}/${ld.getDate()}`);
-                }
-                if(ld >= mon) weekP += l.p;
-            });
-
-            // 進度條
-            const percent = Math.min(Math.max(0, (weekP/300)*100), 100);
-            document.getElementById('weekBar').style.width = percent + '%';
-            document.getElementById('weekProgressText').innerText = `${weekP.toFixed(1)} / 300u`;
-            if(weekP >= 300) document.getElementById('goalCard').classList.add('celebrate-300');
-
-            document.getElementById('bankrollDisplay').innerText = (baseMoney + allP).toFixed(1) + ' u';
-            
-            logs.forEach((l, i) => {
-                const ld = new Date(l.date);
-                if((currentMode==='day' && ld.toDateString()===now.toDateString()) || (currentMode==='week' && ld >= mon) || (currentMode==='month' && ld.getMonth()===now.getMonth())) {
-                    t += l.p; l.p > 0 ? (win++, g++) : l.p < 0 ? (lose++, g++) : 0;
-                    tbody.innerHTML += `<tr><td>${ld.getMonth()+1}/${ld.getDate()} ${ld.getHours()}:${ld.getMinutes()}</td><td>${l.n}</td><td class="${l.p>0?'win':(l.p<0?'lose':'')}">${l.p>0?'+'+l.p:l.p}</td><td><button class="del-btn" onclick="del(${i})">×</button></td></tr>`;
-                }
-            });
-
-            document.getElementById('total').innerText = t.toFixed(1);
-            document.getElementById('winCount').innerText = win;
-            document.getElementById('loseCount').innerText = lose;
-            document.getElementById('winRate').innerText = g > 0 ? Math.round((win/g)*100) + '%' : '0%';
-            localStorage.setItem('nba_god_v10', JSON.stringify(logs));
-            updateChart(chartLabels, chartData);
-        }
-
-        function updateChart(labels, data) {
-            if(myChart) myChart.destroy();
-            myChart = new Chart(document.getElementById('profitChart'), {
-                type: 'line',
-                data: { labels, datasets: [{ label: '盈虧', data, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#555', font: { size: 9 } } }, y: { grid: { color: '#222' }, ticks: { color: '#555', font: { size: 9 } } } } }
-            });
-        }
-
-        function save() { 
-            const n = document.getElementById('name').value || "未命名"; 
-            const p = parseFloat(document.getElementById('res').value); 
-            logs.unshift({n, p, date: new Date().toISOString()}); 
-            render(); document.getElementById('name').value=''; 
-        }
-        function del(i) { if(confirm('刪除？')){logs.splice(i,1); render();} }
-        function setBase() { let m = prompt("本金:", baseMoney); if(m!==null){baseMoney=parseFloat(m); localStorage.setItem('nba_base_v10', baseMoney); render();} }
-        
-        initUnits(); render();
-    </script>
+  updateUI();
+</script>
 </body>
 </html>
