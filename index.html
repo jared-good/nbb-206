@@ -2,47 +2,160 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台灣探索冒險</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>傑瑞號：台灣大開拓</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  :root { --gold: #f1c40f; --gray: #95a5a6; --green: #2ecc71; }
-  body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #2c3e50; }
-  
-  /* 頂部進度條 */
-  .header { background: #1a1a1a; color: white; padding: 15px; display: flex; align-items: center; gap: 15px; }
-  .xp-container { flex-grow: 1; height: 12px; background: #444; border-radius: 6px; overflow: hidden; }
-  .xp-fill { height: 100%; background: var(--gold); width: 0%; transition: 0.5s; }
-  
-  #map { flex-grow: 1; }
+    :root { --neon-blue: #00d2ff; --neon-pink: #ff007f; --gold: #f39c12; --bg-dark: #0a0e14; }
+    body { margin: 0; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: var(--bg-dark); color: white; overflow: hidden; }
+    
+    /* 遊戲頂欄 */
+    #game-ui { position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; pointer-events: none; }
+    .status-bar { display: flex; justify-content: space-between; padding: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); pointer-events: auto; }
+    .player-info { display: flex; flex-direction: column; gap: 5px; }
+    .lv-tag { background: var(--neon-blue); color: black; font-weight: 900; padding: 2px 10px; border-radius: 4px; font-size: 14px; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
+    .xp-bar-container { width: 150px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 5px; border: 1px solid var(--neon-blue); }
+    #xp-fill { height: 100%; background: var(--neon-blue); width: 0%; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-  /* 下方任務列表 */
-  .quest-panel { background: white; height: 200px; overflow-y: auto; padding: 10px; }
-  .quest-card { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; gap: 10px; }
-  .quest-card.done { background: #f0fff4; opacity: 0.7; }
-  .quest-info { flex-grow: 1; }
-  .quest-name { font-weight: bold; font-size: 14px; }
-  .quest-dist { font-size: 12px; color: #666; }
-  .btn-go { background: var(--gold); border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-  .btn-done { background: var(--green); color: white; border: none; padding: 5px 10px; border-radius: 4px; }
+    /* 地圖區域 */
+    #map { height: 100vh; width: 100vw; background: #000 !important; }
+    
+    /* 底部任務選單 */
+    .quest-sheet { position: absolute; bottom: 0; left: 0; width: 100%; height: 250px; background: rgba(10, 14, 20, 0.95); border-top: 2px solid var(--neon-blue); z-index: 1001; transition: transform 0.3s; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 20px 20px 0 0; }
+    .sheet-handle { width: 40px; height: 5px; background: #333; margin: -5px auto 10px; border-radius: 5px; }
+    .quest-list { overflow-y: auto; flex-grow: 1; }
+    .quest-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(0, 210, 255, 0.2); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .quest-card.locked { opacity: 0.5; filter: grayscale(1); }
+    .quest-details b { color: var(--neon-blue); font-size: 16px; }
+    .quest-details p { margin: 5px 0 0; font-size: 12px; color: #aaa; }
+    .btn-action { background: var(--neon-blue); border: none; color: black; font-weight: bold; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+    .btn-done { background: var(--gold); }
+
+    /* 特效 */
+    .leaflet-container { background: #000 !important; }
+    .pulse { animation: pulse-animation 2s infinite; }
+    @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0px rgba(0, 210, 255, 0.4); } 100% { box-shadow: 0 0 0 20px rgba(0, 210, 255, 0); } }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div id="lvDisplay" style="font-weight: bold; color: var(--gold);">LV.1</div>
-  <div class="xp-container"><div class="xp-fill" id="xpBar"></div></div>
-  <div id="scoreDisplay">0 / 100 XP</div>
+<div id="game-ui">
+    <div class="status-bar">
+        <div class="player-info">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="lv-tag" id="lv-text">LV. 01</span>
+                <span id="rank-text" style="color: var(--neon-blue); letter-spacing: 2px; font-weight: bold;">新進探險員</span>
+            </div>
+            <div class="xp-bar-container"><div id="xp-fill"></div></div>
+        </div>
+        <div style="text-align: right;">
+            <div id="total-xp" style="font-family: monospace; font-size: 18px; color: var(--gold);">0 XP</div>
+            <div style="font-size: 10px; color: #666;">JERRY'S TRAIN ADVENTURE</div>
+        </div>
+    </div>
 </div>
 
 <div id="map"></div>
 
-<div class="quest-panel" id="questPanel">
-  </div>
+<div class="quest-sheet">
+    <div class="sheet-handle"></div>
+    <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--neon-pink);">主線任務：開拓台灣疆域</div>
+    <div class="quest-list" id="quest-list">
+        </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // 1. 預設冒險景點資料 (你可以隨時增加)
-  const allQuests = [
-    { id: 1, name: "竹北：新瓦屋尋寶", lat: 24.811, lng: 121.029, desc: "探索客家文化聚落", xp: 20 },
-    { id: 2, name: "新竹：動物園看河馬", lat: 24.801, lng: 120.98
+    // 1. 豪華版景點資料庫 (結合你的愛好)
+    const quests = [
+        { id: 1, name: "竹北：新瓦屋尋寶", lat: 24.811, lng: 121.029, tag: "放電", xp: 150, info: "適合溜小孩的客家聚落" },
+        { id: 2, name: "竹北：AI 智慧園區公園", lat: 24.829, lng: 121.015, tag: "放電", xp: 200, info: "竹北最強小孩放電神點" },
+        { id: 3, name: "新竹：城隍廟攻略", lat: 24.802, lng: 120.965, tag: "美食", xp: 100, info: "肉圓與乾麵的頂尖對決" },
+        { id: 4, name: "新竹：十八尖山挑戰", lat: 24.795, lng: 120.985, tag: "運動", xp: 300, info: "新竹人的小百岳，爬完看 NBA 剛好" },
+        { id: 5, name: "苗栗：蘇維拉莊園", lat: 24.597, lng: 121.011, tag: "旅遊", xp: 500, info: "山城美景，開拓視野" },
+        { id: 6, name: "台北：信義區財富密碼", lat: 25.033, lng: 121.564, tag: "科技", xp: 600, info: "觀察 BTC 實體提款機與潮流" },
+        { id: 7, name: "台中：逢甲夜市獵食", lat: 24.179, lng: 120.645, tag: "美食", xp: 450, info: "在夜市裡思考合約開幾倍" }
+    ];
+
+    // 2. 初始化黑魂風地圖 (CartoDB DarkMatter)
+    const map = L.map('map', { zoomControl: false }).setView([24.82, 121.01], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: 'Jerry Train'
+    }).addTo(map);
+
+    let save = JSON.parse(localStorage.getItem('jerry_adventure_v1')) || { visited: [], totalXp: 0 };
+
+    // 3. 渲染邏輯
+    function init() {
+        renderMap();
+        renderList();
+        updateUI();
+    }
+
+    function renderMap() {
+        quests.forEach(q => {
+            const isDone = save.visited.includes(q.id);
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background:${isDone ? 'var(--neon-blue)' : '#333'}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow: 0 0 10px ${isDone ? 'var(--neon-blue)' : '#000'}" class="${!isDone ? 'pulse' : ''}"></div>`,
+                iconSize: [12, 12]
+            });
+
+            L.marker([q.lat, q.lng], { icon }).addTo(map)
+                .bindPopup(`<b style="color:black">${q.name}</b><br><span style="color:gray">${q.info}</span>`);
+        });
+    }
+
+    function renderList() {
+        const list = document.getElementById('quest-list');
+        list.innerHTML = '';
+        quests.forEach(q => {
+            const isDone = save.visited.includes(q.id);
+            const card = document.createElement('div');
+            card.className = `quest-card ${isDone ? '' : ''}`;
+            card.innerHTML = `
+                <div class="quest-details">
+                    <span style="font-size:10px; color:var(--neon-pink)">[${q.tag}]</span><br>
+                    <b>${q.name}</b>
+                    <p>${q.info}</p>
+                </div>
+                <div>
+                    ${isDone ? '<button class="btn-action btn-done">已拓荒</button>' : `<button class="btn-action" onclick="claim(${q.id})">+${q.xp}XP</button>`}
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function updateUI() {
+        const lv = Math.floor(save.totalXp / 500) + 1;
+        const currentXp = save.totalXp % 500;
+        const xpPercent = (currentXp / 500) * 100;
+
+        document.getElementById('lv-text').innerText = `LV. ${lv.toString().padStart(2, '0')}`;
+        document.getElementById('xp-fill').style.width = `${xpPercent}%`;
+        document.getElementById('total-xp').innerText = `${save.totalXp} XP`;
+        
+        if (lv >= 5) document.getElementById('rank-text').innerText = "專業領航員";
+        if (lv >= 10) document.getElementById('rank-text').innerText = "台灣探索王";
+    }
+
+    window.claim = function(id) {
+        const quest = quests.find(q => q.id === id);
+        if (!save.visited.includes(id)) {
+            save.visited.push(id);
+            save.totalXp += quest.xp;
+            localStorage.setItem('jerry_adventure_v1', JSON.stringify(save));
+            
+            // 慶祝特效
+            map.flyTo([quest.lat, quest.lng], 15);
+            alert(`🔥 拓荒成功！獲得 ${quest.xp} 經驗值！\n繼續朝下一個目標前進吧，傑瑞！`);
+            
+            init();
+        }
+    };
+
+    init();
+</script>
+</body>
+</html>
